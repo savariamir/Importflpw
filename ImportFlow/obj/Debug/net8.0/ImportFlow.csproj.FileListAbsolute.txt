@@ -1,0 +1,7 @@
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.csproj.AssemblyReference.cache
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.GeneratedMSBuildEditorConfig.editorconfig
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.AssemblyInfoInputs.cache
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.AssemblyInfo.cs
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.csproj.CoreCompileInputs.cache
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.MvcApplicationPartsAssemblyInfo.cs
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.MvcApplicationPartsAssemblyInfo.cache
