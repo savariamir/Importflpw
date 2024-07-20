@@ -61,27 +61,27 @@ public class State<TEvent> where TEvent : ImportEvent
     }
 
 
-    public ImportState Status
+    public string Status
     {
         get
         {
             if (SucceedEvents.Count == TotalCount)
             {
-                return ImportState.Completed;
+                return ImportState.Completed.ToString();
             }
 
             if (SucceedEvents.Count == 0 && FailedEvents.Count == TotalCount)
             {
-                return ImportState.Failed;
+                return ImportState.Failed.ToString();;
             }
 
             var timeDifference = DateTime.Now - CreateAt;
             if (timeDifference.Minutes > 2)
             {
-                return ImportState.PartiallyFailed;
+                return ImportState.PartiallyFailed.ToString();;
             }
 
-            return ImportState.Processing;
+            return ImportState.Processing.ToString();;
         }
     }
 }

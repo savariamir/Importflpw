@@ -11,11 +11,30 @@ public class DataExportConsumer(IStateRepository<DataExported> repository) : IMe
     {
         var random = new Random();
         var number = random.Next(1, 10);
+        
+        var causationId = context.Message.EventId;
+        
+        var state = Domain.State<DataExported>.Create(
+            StepsName.DateExport,
+            context.Message.CorrelationId,
+            causationId, 1);
 
-        if (number == 1)
+        await repository.AddAsync(state);
+
+        // if (number == 1)
+        // {
+        //     throw new Exception("Something went wrong");
+        // }
+        
+        var @event = new DataExported
         {
-            throw new Exception("Something went wrong");
-        }
+            CausationId = causationId,
+            CorrelationId =context.Message.CorrelationId,
+            Number = 1
+        };
+        
+        await repository.PublishedAsync(@event);
+        await repository.SucceedAsync(@event);
 
         // for (var i = 0; i < 4; i++)
         // {

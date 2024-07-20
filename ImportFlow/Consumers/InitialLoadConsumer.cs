@@ -13,24 +13,26 @@ public class InitialLoadConsumer(IStateRepository<InitialLoadFinished> repositor
         var random = new Random();
         var number = random.Next(1, 10);
 
+        var causationId = context.Message.EventId;
+
         var state = Domain.State<InitialLoadFinished>.Create(
             StepsName.InitialLoad,
             context.Message.CorrelationId,
-            context.Message.CausationId, 5);
+            causationId, 5);
 
         await repository.AddAsync(state);
 
-        if (number == 1)
-        {
-            throw new Exception("Something went wrong");
-        }
+        // if (number == 1)
+        // {
+        //     throw new Exception("Something went wrong");
+        // }
 
         for (var i = 0; i < 5; i++)
         {
             var @event = new InitialLoadFinished
             {
-                CausationId = context.Message.EventId,
                 CorrelationId = context.Message.CorrelationId,
+                CausationId = causationId,
                 Number = i + 1
             };
             // ...

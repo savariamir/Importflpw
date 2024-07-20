@@ -11,6 +11,8 @@ public static class Configuration
         services.AddMassTransit(mt =>
         {
             mt.AddConsumer<AggregatorConsumer<SupplierFilesDownloaded>>();
+            mt.AddConsumer<AggregatorConsumer<InitialLoadFinished>>();
+            mt.AddConsumer<AggregatorConsumer<TransformationFinished>>();
 
             mt.UsingAzureServiceBus((context, cfg) =>
             {

@@ -5,28 +5,28 @@ using ImportFlow.Events;
 
 namespace ImportFlow.Repositories;
 
-public class StateRepository<TEvent> : IStateRepository<TEvent> where TEvent: ImportEvent
+public class StateRepository<TEvent> : IStateRepository<TEvent> where TEvent : ImportEvent
 {
-    private readonly ConcurrentDictionary<Guid, State<TEvent>> _states = new();
-    
+    private readonly ConcurrentDictionary<(Guid CorrelationId, Guid CausationId), State<TEvent>> _states = new();
+
     public Task AddAsync(State<TEvent> state)
     {
-        _states[state.CausationId] = state;
+        var added = _states.TryAdd((state.CorrelationId, state.CausationId), state);
         return Task.CompletedTask;
     }
-    
-    public Task<State<TEvent>> GetAsync(Guid causationId)
+
+    public Task<IEnumerable<State<TEvent>>> GetAsync(Guid correlationId)
     {
-        if (_states.TryGetValue((causationId), out var state))
-        {
-            return Task.FromResult(state);
-        }
-        return Task.FromResult<State<TEvent>>(null);
+        var result = _states
+            .Where(kvp => kvp.Key.CorrelationId == correlationId)
+            .Select(kvp => kvp.Value);
+
+        return Task.FromResult(result);
     }
-    
+
     public Task PublishedAsync(TEvent message)
     {
-        if (_states.TryGetValue((message.CausationId), out var state))
+        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var state))
         {
             state.Published(message);
         }
@@ -36,7 +36,7 @@ public class StateRepository<TEvent> : IStateRepository<TEvent> where TEvent: Im
 
     public Task SucceedAsync(TEvent message)
     {
-        if (_states.TryGetValue((message.CausationId), out var processInfo))
+        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var processInfo))
         {
             processInfo.Finished(message);
         }
@@ -46,7 +46,7 @@ public class StateRepository<TEvent> : IStateRepository<TEvent> where TEvent: Im
 
     public Task FailedAsync(TEvent message, string errorMessage)
     {
-        if (_states.TryGetValue((message.CausationId), out var processInfo))
+        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var processInfo))
         {
             processInfo.Failed(message, errorMessage);
         }

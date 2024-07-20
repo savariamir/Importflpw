@@ -13,15 +13,16 @@ public class TransformationConsumer(IStateRepository<TransformationFinished> rep
         var random = new Random();
         var number = random.Next(1, 10);
 
-        if (number == 1)
-        {
-            throw new Exception("Something went wrong");
-        }
+        // if (number == 1)
+        // {
+        //     throw new Exception("Something went wrong");
+        // }
+        var causationId = context.Message.EventId;
         
         var state = Domain.State<TransformationFinished>.Create(
             StepsName.Transformation,
             context.Message.CorrelationId,
-            context.Message.CausationId, 3);
+            causationId, 3);
 
         await repository.AddAsync(state);
 
@@ -29,7 +30,7 @@ public class TransformationConsumer(IStateRepository<TransformationFinished> rep
         {
             var @event = new TransformationFinished
             {
-                CausationId = context.Message.EventId,
+                CausationId = causationId,
                 CorrelationId = context.Message.CorrelationId,
                 Number = i + 1
             };

@@ -16,11 +16,11 @@ public class ImportFlowProcess
 
     public State<SupplierFilesDownloaded> DownloadedFilesState { get; private set; }
 
-    public State<InitialLoadFinished>? InitialLoadState { get; private set; }
+    public IEnumerable<State<InitialLoadFinished>>? InitialLoadState { get; private set; }
 
-    public State<TransformationFinished>? TransformationState { get; private set; }
+    public IEnumerable<State<TransformationFinished>>? TransformationState { get; private set; }
 
-    public State<DataExported>? DataExportState { get; private set; }
+    public IEnumerable<State<DataExported>>? DataExportState { get; private set; }
 
     private ImportFlowProcess(ImportFlowProcessInfo info)
     {
@@ -48,17 +48,17 @@ public class ImportFlowProcess
         DownloadedFilesState = state;
     }
 
-    public void Set(State<InitialLoadFinished>? state)
+    public void Set(IEnumerable<State<InitialLoadFinished>>? state)
     {
         InitialLoadState = state;
     }
 
-    public void Set(State<TransformationFinished>? state)
+    public void Set(IEnumerable<State<TransformationFinished>>? state)
     {
         TransformationState = state;
     }
 
-    public void Set(State<DataExported>? state)
+    public void Set(IEnumerable<State<DataExported>>? state)
     {
         DataExportState = state;
     }
