@@ -1,8 +1,9 @@
 using ImportFlow.Events;
+using ImportFlow.QueryModels;
 
 namespace ImportFlow.Domain;
 
-public class State<TEvent> where TEvent : ImportEvent
+public class State<TEvent> : Import where TEvent : ImportEvent
 {
     public Guid CorrelationId { get; set; }
 
@@ -23,7 +24,15 @@ public class State<TEvent> where TEvent : ImportEvent
 
     public HashSet<TEvent> Events { get; private set; } = new();
 
+    public IEnumerable<EventNode<TEvent>> EventsInfo { get; private set; }
+
     public long TotalCount { get; private set; }
+
+
+    public void Accept(IImportFlowVisitor visitor)
+    {
+        visitor.Visit(this);
+    }
 
 
     private State(string name, Guid correlationId, Guid causationId, int totalCount)
@@ -35,7 +44,7 @@ public class State<TEvent> where TEvent : ImportEvent
         CreateAt = DateTime.Now;
     }
 
-    public static State<TEvent> Create( string name, Guid correlationId, Guid causationId,
+    public static State<TEvent> Create(string name, Guid correlationId, Guid causationId,
         int totalCount)
     {
         return new State<TEvent>(
@@ -61,27 +70,35 @@ public class State<TEvent> where TEvent : ImportEvent
     }
 
 
-    public string Status
+    public ImportState Status
     {
         get
         {
             if (SucceedEvents.Count == TotalCount)
             {
-                return ImportState.Completed.ToString();
+                return ImportState.Completed;
             }
 
             if (SucceedEvents.Count == 0 && FailedEvents.Count == TotalCount)
             {
-                return ImportState.Failed.ToString();;
+                return ImportState.Failed;
+                ;
             }
 
             var timeDifference = DateTime.Now - CreateAt;
-            if (timeDifference.Minutes > 2)
+            if (timeDifference.Minutes > 1)
             {
-                return ImportState.PartiallyFailed.ToString();;
+                return ImportState.PartiallyFailed;
+                ;
             }
 
-            return ImportState.Processing.ToString();;
+            return ImportState.Processing;
+            ;
         }
+    }
+
+    public override void BuildTree()
+    {
+        throw new NotImplementedException();
     }
 }

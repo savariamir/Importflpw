@@ -1,6 +1,6 @@
 namespace ImportFlow.Domain;
 
-public class Message
+public class Message: Import
 {
     public Message(Guid eventId, string errorMessage)
     {
@@ -20,4 +20,7 @@ public class Message
     public DateTime CreatedAt { get; set; }
 
     public string? ErrorMessage { get; private set; }
+    public override void BuildTree()
+    {
+    }
 }

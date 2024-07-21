@@ -16,4 +16,16 @@ public static class ImportProcess
             _ => throw new InvalidOperationException()
         };
     }
+    
+    public static string GetNextName(string stateName)
+    {
+        return stateName switch
+        {
+            StepsName.SupplierFiles =>  StepsName.InitialLoad,
+            StepsName.InitialLoad =>  StepsName.Transformation,
+            StepsName.Transformation =>  StepsName.DateExport,
+            StepsName.DateExport =>  string.Empty,
+            _ => throw new InvalidOperationException()
+        };
+    }
 }

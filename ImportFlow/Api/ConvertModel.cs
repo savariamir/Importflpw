@@ -1,57 +1,13 @@
 using ImportFlow.Domain;
-using ImportFlow.Domain.Repositories;
 using ImportFlow.Events;
 using ImportFlow.QueryModels;
-using MassTransit;
 
 namespace ImportFlow.Api;
 
-public class PushApi(
-    IImportFlowRepository repository,
-    IStateRepository<SupplierFilesDownloaded> stateRepository,
-    IBus bus)
+public class ConvertToQuery
 {
-    public async Task StartAsync()
+    public ImportFlowQuery GatByIdAsync(ImportFlowProcess import)
     {
-        var info = new ImportFlowProcessInfo
-        {
-            PlatformId = 1,
-            SupplierId = 21,
-            FilesCount = 4,
-            CorrelationId = Guid.NewGuid(),
-        };
-
-        await StartAsync(info);
-        //
-
-
-        for (var i = 0; i < 4; i++)
-        {
-            var @event = new SupplierFilesDownloaded
-            {
-                CorrelationId = info.CorrelationId,
-                CausationId = info.CorrelationId,
-                Number = i + 1
-            };
-            // ...
-
-            await stateRepository.PublishedAsync(@event);
-            await bus.Publish(@event);
-        }
-    }
-
-    public async Task<IEnumerable<ImportFlowProcess>> GetAsync()
-    {
-        return await repository.GatAllAsync();
-    }
-
-    public async Task<ImportFlowQuery> GatByIdAsync(Guid importFlowProcessId)
-    {
-        var import = await repository.GatByIdAsync(importFlowProcessId);
-
-        // var x = new ConvertToQuery2().GetByIdAsync(import);
-        //
-        // return x;
 
         var query = new ImportFlowQuery
         {
@@ -91,8 +47,9 @@ public class PushApi(
                 State = new StateQuery
                 {
                     Name = StepsName.InitialLoad,
-                    Status =  import.DownloadedFilesState.FailedEvents
-                        .FirstOrDefault(f => f.EventId == supplierFilesDownloaded.EventId) != null? ImportState.Failed.ToString() 
+                    Status = import.DownloadedFilesState.FailedEvents
+                        .FirstOrDefault(f => f.EventId == supplierFilesDownloaded.EventId) != null
+                        ? ImportState.Failed.ToString()
                         : ImportState.Processing.ToString()
                 }
             };
@@ -142,11 +99,12 @@ public class PushApi(
                 {
                     Name = StepsName.Transformation,
                     Status = state.FailedEvents
-                        .FirstOrDefault(f => f.EventId == initialLoadFinished.EventId) != null? ImportState.Failed.ToString() 
+                        .FirstOrDefault(f => f.EventId == initialLoadFinished.EventId) != null
+                        ? ImportState.Failed.ToString()
                         : ImportState.Processing.ToString()
                 }
             };
-            
+
             var transformationState = import.TransformationState?
                 .FirstOrDefault(p => p.CausationId == initialLoadFinished.EventId);
 
@@ -192,7 +150,8 @@ public class PushApi(
                 {
                     Name = StepsName.DateExport,
                     Status = state.FailedEvents
-                        .FirstOrDefault(f => f.EventId == transformationFinished.EventId) != null? ImportState.Failed.ToString() 
+                        .FirstOrDefault(f => f.EventId == transformationFinished.EventId) != null
+                        ? ImportState.Failed.ToString()
                         : ImportState.Processing.ToString()
                 }
             };
@@ -228,7 +187,7 @@ public class PushApi(
 
         var state = import.DataExportState?
             .First(p => p.CausationId == @event.EventId);
-  
+
         foreach (var dataExported in state.Events)
         {
             var eventQuery = new EventQuery
@@ -244,31 +203,8 @@ public class PushApi(
 
         return events;
     }
-
-    public async Task<IEnumerable<ImportFlowQuery>> GetImportFlowListAsync()
-    {
-        var imports = await repository.GatAllAsync();
-
-        var result = new List<ImportFlowQuery>();
-        foreach (var import in imports)
-        {
-            var query = new ImportFlowQuery
-            {
-                ImportFlowProcessId = import.ImportFlowProcessId,
-                PlatformId = import.PlatformId,
-                SupplierId = import.SupplierId,
-                CreateAt = import.CreateAt,
-                UpdatedAt = import.UpdatedAt,
-                Status = GetStatus(import),
-            };
-
-            result.Add(query);
-        }
-
-        return result;
-    }
-
-    private string GetStatus(ImportFlowProcess import)
+    
+        private string GetStatus(ImportFlowProcess import)
     {
         var timeDifference = DateTime.Now - import.CreateAt;
         if (timeDifference.Minutes > 1 && import.DataExportState?.Count() == 0)
@@ -324,9 +260,4 @@ public class PushApi(
         return ImportState.Processing.ToString();
     }
 
-    private async Task StartAsync(ImportFlowProcessInfo info)
-    {
-        var importFlow = ImportFlowProcess.Start(info);
-        await repository.AddAsync(importFlow);
-    }
 }

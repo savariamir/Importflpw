@@ -4,7 +4,7 @@ public class ImportEvent
 {
     protected ImportEvent()
     {
-        CreateAt = DateTime.Now;
+        CreatedAt = DateTime.Now;
         EventId = Guid.NewGuid();
     }
 
@@ -12,6 +12,6 @@ public class ImportEvent
 
     public Guid CorrelationId { get; set; }
     public Guid CausationId { get; set; }
-    public DateTime CreateAt { get; }
+    public DateTime CreatedAt { get; }
     public int Number { set; get; }
 }

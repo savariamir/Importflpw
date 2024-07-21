@@ -18,7 +18,7 @@ public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStat
         catch (Exception e)
         {
             await repository.FailedAsync(context.Message, e.Message);
-            throw;
+            // throw;
         }
     }
 }

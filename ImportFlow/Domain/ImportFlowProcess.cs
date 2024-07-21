@@ -1,8 +1,9 @@
 using ImportFlow.Events;
+using ImportFlow.QueryModels;
 
 namespace ImportFlow.Domain;
 
-public class ImportFlowProcess
+public class ImportFlowProcess: Import
 {
     public Guid ImportFlowProcessId { get; private set; }
 
@@ -21,6 +22,50 @@ public class ImportFlowProcess
     public IEnumerable<State<TransformationFinished>>? TransformationState { get; private set; }
 
     public IEnumerable<State<DataExported>>? DataExportState { get; private set; }
+    
+    
+    public State<SupplierFilesDownloaded> Tree { get; private set; }
+    
+    
+    public void Accept(IImportFlowVisitor visitor)
+    {
+        visitor.Visit(this);
+    }
+
+
+    // public void BuildTree()
+    // {
+    //     Tree = DownloadedFilesState;
+    //     // Link InitialLoadState with DownloadedFilesState
+    //     foreach (var supplierFilesDownloaded in DownloadedFilesState.Events)
+    //     {
+    //         var initialLoadState = InitialLoadState?.FirstOrDefault(i => i.CausationId == supplierFilesDownloaded.EventId);
+    //         if (initialLoadState != null)
+    //         {
+    //             supplierFilesDownloaded.InitialLoadState = initialLoadState;
+    //
+    //             // Link TransformationState with InitialLoadState
+    //             foreach (var initEvent in initialLoadState.Events)
+    //             {
+    //                 var transformationState = TransformationState.Find(t => t.CausationId == initEvent.EventId);
+    //                 if (transformationState != null)
+    //                 {
+    //                     initEvent.TransformationState = transformationState;
+    //
+    //                     // Link DataExportState with TransformationState
+    //                     foreach (var transEvent in transformationState.Events)
+    //                     {
+    //                         var dataExportState = DataExportState.Find(d => d.CausationId == transEvent.EventId);
+    //                         if (dataExportState != null)
+    //                         {
+    //                             transEvent.DataExportState = dataExportState;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     private ImportFlowProcess(ImportFlowProcessInfo info)
     {
@@ -61,5 +106,10 @@ public class ImportFlowProcess
     public void Set(IEnumerable<State<DataExported>>? state)
     {
         DataExportState = state;
+    }
+
+    public override void BuildTree()
+    {
+        throw new NotImplementedException();
     }
 }
