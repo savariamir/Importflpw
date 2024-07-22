@@ -2,7 +2,7 @@ namespace ImportFlow.Domain.ModelsV2;
 
 public class ImportFlowV2
 {
-    public Guid ImportFlowProcessId { get; private set; }
+    public Guid Id { get; private set; }
 
     public int PlatformId { get; private set; }
 
@@ -23,7 +23,7 @@ public class ImportFlowV2
 
     private ImportFlowV2(ImportFlowProcessInfo info)
     {
-        ImportFlowProcessId = info.CorrelationId;
+        Id = info.CorrelationId;
 
         var downloadState = StateV2.Create(
             StepsName.SupplierFiles,
@@ -40,6 +40,14 @@ public class ImportFlowV2
     public static ImportFlowV2 Start(ImportFlowProcessInfo info)
     {
         return new ImportFlowV2(info);
+    }
+    
+    public void Set(List<StateV2> states)
+    {
+        DownloadedFilesState = states.First(p=>p.Name == StepsName.SupplierFiles);
+        InitialLoadState = states.Where(p=>p.Name == StepsName.InitialLoad);
+        TransformationState = states.Where(p=>p.Name == StepsName.Transformation);
+        DataExportState = states.Where(p=>p.Name == StepsName.DateExport);
     }
 
     public void SetDownloadState(StateV2 state)

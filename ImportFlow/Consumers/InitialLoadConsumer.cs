@@ -6,7 +6,7 @@ using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class InitialLoadConsumer(IStateRepositoryV2<InitialLoadFinished> repository)
+public class InitialLoadConsumer(IStateRepositoryV2<ImportEvent> repository)
     : IMessageConsumer<SupplierFilesDownloaded>
 {
     public async Task Consume(ConsumeContext<SupplierFilesDownloaded> context)
@@ -20,6 +20,7 @@ public class InitialLoadConsumer(IStateRepositoryV2<InitialLoadFinished> reposit
             StepsName.InitialLoad,
             context.Message.CorrelationId,
             causationId, 5);
+        
 
         await repository.AddAsync(state);
 
@@ -27,6 +28,8 @@ public class InitialLoadConsumer(IStateRepositoryV2<InitialLoadFinished> reposit
         {
             throw new Exception($"Something went wrong in Initial Load {DateTime.Now.TimeOfDay}");
         }
+
+        await Task.Delay(10000);
 
         for (var i = 0; i < 5; i++)
         {

@@ -1,5 +1,3 @@
-using ImportFlow.Domain;
-
 namespace ImportFlow.QueryModels;
 
 public class EventQueryModel
@@ -7,6 +5,10 @@ public class EventQueryModel
     public Guid EventId { get; set; }
 
     public DateTime CreatedAt { get; set; }
+    
+    public RetryQueryModel? Retry { set; get; }
+
+    public string EventName { get; set; }
     public IEnumerable<MessageQueryModel>? FailedEvents { set; get; }
     public StateQueryModel? State { get; set; }
 
@@ -14,6 +16,13 @@ public class EventQueryModel
     {
         visitor.Visit(this);
     }
+}
+
+public class RetryQueryModel
+{
+    public Guid? CausationId { set; get; }
+    public string? Reason {  set; get; }
+    public string? RetryBy { set; get; }
 }
 
 public class MessageQueryModel

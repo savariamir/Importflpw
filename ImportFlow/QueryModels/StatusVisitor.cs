@@ -75,7 +75,6 @@ public class MessageVisitor : IVisitor
         }
     }
 
-
     public void Visit(EventQueryModel eventQueryModel)
     {
         eventQueryModel.State?.Accept(this);

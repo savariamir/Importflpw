@@ -6,7 +6,7 @@ using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class DataExportConsumer(IStateRepositoryV2<DataExported> repository) : IMessageConsumer<TransformationFinished>
+public class DataExportConsumer(IStateRepositoryV2<ImportEvent> repository) : IMessageConsumer<TransformationFinished>
 {
     public async Task Consume(ConsumeContext<TransformationFinished> context)
     {
@@ -21,6 +21,8 @@ public class DataExportConsumer(IStateRepositoryV2<DataExported> repository) : I
             causationId, 1);
 
         await repository.AddAsync(state);
+        
+        await Task.Delay(10000);
 
         if (number == 1)
         {

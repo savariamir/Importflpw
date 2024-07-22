@@ -6,7 +6,7 @@ using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class TransformationConsumer(IStateRepositoryV2<TransformationFinished> repository)
+public class TransformationConsumer(IStateRepositoryV2<ImportEvent> repository)
     : IMessageConsumer<InitialLoadFinished>
 {
     public async Task Consume(ConsumeContext<InitialLoadFinished> context)
@@ -28,6 +28,8 @@ public class TransformationConsumer(IStateRepositoryV2<TransformationFinished> r
         {
             throw new Exception($"Something went wrong in Transformation {DateTime.Now.TimeOfDay}");
         }
+        
+        await Task.Delay(10000);
 
         for (var i = 0; i < 3; i++)
         {

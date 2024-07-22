@@ -8,7 +8,6 @@ namespace ImportFlow.Repositories.V2;
 public class StateRepositoryV2<TEvent> : IStateRepositoryV2<TEvent> where TEvent : ImportEvent
 {
     private readonly ConcurrentDictionary<(Guid CorrelationId, Guid CausationId), StateV2> _states = new();
-
     public Task AddAsync(StateV2 state)
     {
         var added = _states.TryAdd((state.CorrelationId, state.CausationId), state);

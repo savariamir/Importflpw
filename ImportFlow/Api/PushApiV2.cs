@@ -9,7 +9,7 @@ namespace ImportFlow.Api;
 
 public class PushApiV2(
     IImportFlowRepositoryV2 importFlowRepository,
-    IStateRepositoryV2<SupplierFilesDownloaded> downloadStepRepository,
+    IStateRepositoryV2<ImportEvent> downloadStepRepository,
     IBus bus)
 {
     public async Task StartAsync()
@@ -55,7 +55,6 @@ public class PushApiV2(
     public async Task<IEnumerable<ImportFlowQueryModel>> GetImportFlowListAsync()
     {
         var imports = await importFlowRepository.GatAllAsync();
-
         var result = new ImportFlowBuilder().GetImportFlowList(imports);
         return result;
     }

@@ -10,7 +10,7 @@ public class ImportFlowBuilder
     {
         var model = new ImportFlowQueryModel
         {
-            ImportFlowProcessId = import.ImportFlowProcessId,
+            ImportFlowProcessId = import.Id,
             PlatformId = import.PlatformId,
             SupplierId = import.SupplierId,
             CreateAt = import.CreateAt,
@@ -125,6 +125,13 @@ public class ImportFlowBuilder
             {
                 EventId = @event.EventId,
                 CreatedAt = @event.CreatedAt,
+                EventName = @event.GetType().Name,
+                Retry = @event.Retry != null? new RetryQueryModel
+                {
+                    Reason = @event.Retry.Reason,
+                    RetryBy = @event.Retry.RetryBy,
+                    CausationId = @event.Retry.CausationId
+                }: null,
                 FailedEvents = currentState.FailedEvents.Where(p => p.EventId == @event.EventId).Select(p =>
                     new MessageQueryModel
                     {
@@ -139,16 +146,7 @@ public class ImportFlowBuilder
                 ?.FirstOrDefault(p => p.CausationId == @event.EventId);
             if (nextState is not null)
             {
-                if (currentState.FailedEvents.Any(p => p.EventId == @event.EventId))
-                {
-                
-                }
                 var initialLoadEvents = CreateEventsV2(import, nextState);
-                
-                if (currentState.FailedEvents.Any(p => p.EventId == @event.EventId))
-                {
-                
-                }
 
                 eventQuery.State = new StateQueryModel
                 {
@@ -168,6 +166,11 @@ public class ImportFlowBuilder
         return events;
     }
 
+    // private long GetDuration()
+    // {
+    //     return 
+    // }
+
     private static IEnumerable<StateV2>? GetNextState(ImportFlowV2 import, string currentStateName)
     {
         return currentStateName switch
@@ -185,7 +188,7 @@ public class ImportFlowBuilder
     {
         return new StateQueryModel
         {
-            Name = stepName,
+            Name = ImportProcess.GetNextName(stepName),
             Status = failedEvents
                 .FirstOrDefault(f => f.EventId == eventId) != null
                 ? ImportStatus.Failed.ToString()

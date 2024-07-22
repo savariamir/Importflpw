@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "63v0MXkjAAnZzKffg3DjN0bpHfjgLQ4yDR2ZGUUbkA+LbcdDPRr9hdGjn6puK5STEE92gRHNc4a5CVy5t3yl4A==",
+  "dgSpecHash": "+oZ6HeIazfZj7r/xrxCs2+zha/W0fHvHCCBz1SSSXlyfWKvytVwr3x0Z3YYsPbLI8+XhVGPz6edTyruQOBFqJw==",
   "success": true,
   "projectFilePath": "/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/ImportFlow.csproj",
   "expectedPackageFiles": [
+    "/Users/amirsavari/.nuget/packages/automapper/13.0.1/automapper.13.0.1.nupkg.sha512",
     "/Users/amirsavari/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/Users/amirsavari/.nuget/packages/azure.core.amqp/1.3.0/azure.core.amqp.1.3.0.nupkg.sha512",
     "/Users/amirsavari/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",

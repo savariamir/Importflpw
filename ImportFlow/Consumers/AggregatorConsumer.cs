@@ -4,7 +4,7 @@ using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStateRepositoryV2<TEvent> repository)
+public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStateRepositoryV2<ImportEvent> repository)
     : IConsumer<TEvent>
     where TEvent : ImportEvent
 {

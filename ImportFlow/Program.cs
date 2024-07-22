@@ -1,11 +1,10 @@
 using ImportFlow;
 using ImportFlow.Api;
 using ImportFlow.Consumers;
-using ImportFlow.Domain.Repositories;
 using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
-using ImportFlow.Repositories;
 using ImportFlow.Repositories.V2;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,15 +16,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<PushApiV2>();
+builder.Services.AddTransient<MessageSender>();
+
 builder.Services.AddMassTransit(configuration);
 
 builder.Services.AddSingleton<IImportFlowRepositoryV2, ImportFlowRepositoryV2>();
 
 
-builder.Services.AddSingleton<IStateRepositoryV2<SupplierFilesDownloaded>, StateRepositoryV2<SupplierFilesDownloaded>>();
-builder.Services.AddSingleton<IStateRepositoryV2<InitialLoadFinished>, StateRepositoryV2<InitialLoadFinished>>();
-builder.Services.AddSingleton<IStateRepositoryV2<TransformationFinished>, StateRepositoryV2<TransformationFinished>>();
-builder.Services.AddSingleton<IStateRepositoryV2<DataExported>, StateRepositoryV2<DataExported>>();
+builder.Services.AddSingleton<IStateRepositoryV2<ImportEvent>, StateRepositoryV2<ImportEvent>>();
+// builder.Services.AddSingleton<IStateRepositoryV2<InitialLoadFinished>, StateRepositoryV2<InitialLoadFinished>>();
+// builder.Services.AddSingleton<IStateRepositoryV2<TransformationFinished>, StateRepositoryV2<TransformationFinished>>();
+// builder.Services.AddSingleton<IStateRepositoryV2<DataExported>, StateRepositoryV2<DataExported>>();
 
 builder.Services.AddScoped<IMessageConsumer<SupplierFilesDownloaded>, InitialLoadConsumer>();
 builder.Services.AddScoped<IMessageConsumer<InitialLoadFinished>, TransformationConsumer>();
@@ -74,11 +75,13 @@ app.MapGet("/get-list", async (PushApiV2 pushApi) => await pushApi.GetImportFlow
     .WithName("GetList")
     .WithOpenApi();
 
+app.MapPost("/send",
+        async (MessageSender sender, [FromBody] MessageCommand command) => await sender.ResendAsync(command))
+    .WithName("Send")
+    .WithOpenApi();
 
-app.MapGet("/get-list/{id}", async (PushApiV2 pushApi, Guid id) =>
-    {
-        return await pushApi.GatByIdAsync(id);
-    })
+
+app.MapGet("/get-list/{id}", async (PushApiV2 pushApi, Guid id) => await pushApi.GatByIdAsync(id))
     .WithName("GetById")
     .WithOpenApi();
 
