@@ -1,6 +1,6 @@
 namespace ImportFlow.QueryModels;
 
-public class ImportFlowQuery
+public class ImportFlowQueryModel
 {
     public Guid ImportFlowProcessId { get;  set; }
 
@@ -18,7 +18,7 @@ public class ImportFlowQuery
 
     public IEnumerable<string> Messages { set; get; } = [];
 
-    public StateQuery State { get;  set; }
+    public StateQueryModel State { get;  set; }
     
     public void Accept(IVisitor visitor)
     {

@@ -1,8 +1,6 @@
-using ImportFlow.Domain;
-
 namespace ImportFlow.QueryModels;
 
-public class StateQuery
+public class StateQueryModel
 {
     public string Name { get; set; }
     
@@ -12,7 +10,7 @@ public class StateQuery
     
     public DateTime CreateAt { get;  set; }
     
-    public IEnumerable<EventQuery>? Events { get;  set; }
+    public IEnumerable<EventQueryModel>? Events { get;  set; }
     public string Status { set; get; }
 
     public long TotalCount { get;  set; }

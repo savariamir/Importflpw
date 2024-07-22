@@ -24,7 +24,7 @@ public static class Configuration
                     ec.UseMessageRetry(x => x.Interval(5, TimeSpan.FromSeconds(1)));
                     ec.UseDelayedRedelivery(x =>
                     {
-                        x.Incremental(5, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+                        x.Incremental(5, TimeSpan.FromMicroseconds(10), TimeSpan.FromMicroseconds(5));
                     });
                     ec.ConfigureConsumer<AggregatorConsumer<SupplierFilesDownloaded>>(context);
                 });

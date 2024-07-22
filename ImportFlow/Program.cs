@@ -1,11 +1,11 @@
 using ImportFlow;
 using ImportFlow.Api;
 using ImportFlow.Consumers;
-using ImportFlow.Domain;
 using ImportFlow.Domain.Repositories;
+using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
 using ImportFlow.Repositories;
-using MassTransit;
+using ImportFlow.Repositories.V2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,15 +16,16 @@ var configuration = ((IConfigurationBuilder)builder.Configuration).Build();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddTransient<PushApi>();
+builder.Services.AddTransient<PushApiV2>();
 builder.Services.AddMassTransit(configuration);
 
-builder.Services.AddSingleton<IImportFlowRepository, ImportFlowRepository>();
+builder.Services.AddSingleton<IImportFlowRepositoryV2, ImportFlowRepositoryV2>();
 
-builder.Services.AddSingleton<IStateRepository<SupplierFilesDownloaded>, StateRepository<SupplierFilesDownloaded>>();
-builder.Services.AddSingleton<IStateRepository<InitialLoadFinished>, StateRepository<InitialLoadFinished>>();
-builder.Services.AddSingleton<IStateRepository<TransformationFinished>, StateRepository<TransformationFinished>>();
-builder.Services.AddSingleton<IStateRepository<DataExported>, StateRepository<DataExported>>();
+
+builder.Services.AddSingleton<IStateRepositoryV2<SupplierFilesDownloaded>, StateRepositoryV2<SupplierFilesDownloaded>>();
+builder.Services.AddSingleton<IStateRepositoryV2<InitialLoadFinished>, StateRepositoryV2<InitialLoadFinished>>();
+builder.Services.AddSingleton<IStateRepositoryV2<TransformationFinished>, StateRepositoryV2<TransformationFinished>>();
+builder.Services.AddSingleton<IStateRepositoryV2<DataExported>, StateRepositoryV2<DataExported>>();
 
 builder.Services.AddScoped<IMessageConsumer<SupplierFilesDownloaded>, InitialLoadConsumer>();
 builder.Services.AddScoped<IMessageConsumer<InitialLoadFinished>, TransformationConsumer>();
@@ -61,20 +62,20 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/push-api", async (PushApi pushApi) => { await pushApi.StartAsync(); })
+app.MapGet("/push-api", async (PushApiV2 pushApi) => { await pushApi.StartAsync(); })
     .WithName("PushApi")
     .WithOpenApi();
 
-app.MapGet("/get", async (PushApi pushApi) => await pushApi.GetAsync())
+app.MapGet("/get", async (PushApiV2 pushApi) => await pushApi.GetAsync())
     .WithName("Get")
     .WithOpenApi();
 
-app.MapGet("/get-list", async (PushApi pushApi) => await pushApi.GetImportFlowListAsync())
+app.MapGet("/get-list", async (PushApiV2 pushApi) => await pushApi.GetImportFlowListAsync())
     .WithName("GetList")
     .WithOpenApi();
 
 
-app.MapGet("/get-list/{id}", async (PushApi pushApi, Guid id) =>
+app.MapGet("/get-list/{id}", async (PushApiV2 pushApi, Guid id) =>
     {
         return await pushApi.GatByIdAsync(id);
     })

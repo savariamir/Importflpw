@@ -1,6 +1,6 @@
 namespace ImportFlow.Domain;
 
-public enum ImportState
+public enum ImportStatus
 {
     Processing = 1,
     Completed = 2,

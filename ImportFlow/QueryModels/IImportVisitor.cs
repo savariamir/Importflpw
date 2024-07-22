@@ -2,9 +2,9 @@ namespace ImportFlow.QueryModels;
 
 public interface IVisitor
 {
-    void Visit(StateQuery state);
+    void Visit(StateQueryModel state);
 
-    void Visit(ImportFlowQuery state);
+    void Visit(ImportFlowQueryModel state);
 
-    void Visit(EventQuery @event);
+    void Visit(EventQueryModel @event);
 }

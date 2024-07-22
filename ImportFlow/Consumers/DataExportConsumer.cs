@@ -1,11 +1,12 @@
 using ImportFlow.Domain;
-using ImportFlow.Domain.Repositories;
+using ImportFlow.Domain.ModelsV2;
+using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
 using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class DataExportConsumer(IStateRepository<DataExported> repository) : IMessageConsumer<TransformationFinished>
+public class DataExportConsumer(IStateRepositoryV2<DataExported> repository) : IMessageConsumer<TransformationFinished>
 {
     public async Task Consume(ConsumeContext<TransformationFinished> context)
     {
@@ -14,17 +15,18 @@ public class DataExportConsumer(IStateRepository<DataExported> repository) : IMe
         
         var causationId = context.Message.EventId;
         
-        var state = Domain.State<DataExported>.Create(
+        var state = StateV2.Create(
             StepsName.DateExport,
             context.Message.CorrelationId,
             causationId, 1);
 
         await repository.AddAsync(state);
 
-        // if (number == 1)
-        // {
-        //     throw new Exception("Something went wrong");
-        // }
+        if (number == 1)
+        {
+            throw new Exception($"Something went wrong in Data Export {DateTime.Now.TimeOfDay}");
+        }
+        
         
         var @event = new DataExported
         {

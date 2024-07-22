@@ -1,11 +1,12 @@
 using ImportFlow.Domain;
-using ImportFlow.Domain.Repositories;
+using ImportFlow.Domain.ModelsV2;
+using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
 using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class TransformationConsumer(IStateRepository<TransformationFinished> repository)
+public class TransformationConsumer(IStateRepositoryV2<TransformationFinished> repository)
     : IMessageConsumer<InitialLoadFinished>
 {
     public async Task Consume(ConsumeContext<InitialLoadFinished> context)
@@ -13,18 +14,20 @@ public class TransformationConsumer(IStateRepository<TransformationFinished> rep
         var random = new Random();
         var number = random.Next(1, 10);
 
-        if (number == 1)
-        {
-            throw new Exception("Something went wrong");
-        }
+     
         var causationId = context.Message.EventId;
         
-        var state = Domain.State<TransformationFinished>.Create(
+        var state = StateV2.Create(
             StepsName.Transformation,
             context.Message.CorrelationId,
             causationId, 3);
 
         await repository.AddAsync(state);
+        
+        if (number == 1)
+        {
+            throw new Exception($"Something went wrong in Transformation {DateTime.Now.TimeOfDay}");
+        }
 
         for (var i = 0; i < 3; i++)
         {

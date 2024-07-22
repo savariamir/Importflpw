@@ -1,10 +1,10 @@
-using ImportFlow.Domain.Repositories;
+using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
 using MassTransit;
 
 namespace ImportFlow.Consumers;
 
-public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStateRepository<TEvent> repository)
+public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStateRepositoryV2<TEvent> repository)
     : IConsumer<TEvent>
     where TEvent : ImportEvent
 {
@@ -18,7 +18,7 @@ public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStat
         catch (Exception e)
         {
             await repository.FailedAsync(context.Message, e.Message);
-            // throw;
+            throw;
         }
     }
 }
