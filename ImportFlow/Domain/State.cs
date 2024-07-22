@@ -1,9 +1,8 @@
 using ImportFlow.Events;
-using ImportFlow.QueryModels;
 
 namespace ImportFlow.Domain;
 
-public class State<TEvent> : Import where TEvent : ImportEvent
+public class State<TEvent> where TEvent : ImportEvent
 {
     public Guid CorrelationId { get; set; }
 
@@ -24,7 +23,7 @@ public class State<TEvent> : Import where TEvent : ImportEvent
 
     public HashSet<TEvent> Events { get; private set; } = new();
 
-    public IEnumerable<EventNode<TEvent>> EventsInfo { get; private set; }
+    public List<EventNode<TEvent>> EventsInfo { get; private set; } = new();
 
     public long TotalCount { get; private set; }
 
@@ -35,7 +34,7 @@ public class State<TEvent> : Import where TEvent : ImportEvent
     }
 
 
-    private State(string name, Guid correlationId, Guid causationId, int totalCount)
+    private State(string name, Guid correlationId, Guid causationId, long totalCount)
     {
         CorrelationId = correlationId;
         CausationId = causationId;
@@ -45,7 +44,7 @@ public class State<TEvent> : Import where TEvent : ImportEvent
     }
 
     public static State<TEvent> Create(string name, Guid correlationId, Guid causationId,
-        int totalCount)
+        long totalCount)
     {
         return new State<TEvent>(
             name,
@@ -57,6 +56,7 @@ public class State<TEvent> : Import where TEvent : ImportEvent
     public void Published(TEvent @event)
     {
         Events.Add(@event);
+        EventsInfo.Add(new EventNode<TEvent>(@event));
     }
 
     public void Finished(TEvent @event)
@@ -69,36 +69,34 @@ public class State<TEvent> : Import where TEvent : ImportEvent
         FailedEvents.Add(new Message(@event.EventId, errorMessage));
     }
 
-
-    public ImportState Status
+    public void SetStatus(ImportState status)
     {
-        get
-        {
-            if (SucceedEvents.Count == TotalCount)
-            {
-                return ImportState.Completed;
-            }
-
-            if (SucceedEvents.Count == 0 && FailedEvents.Count == TotalCount)
-            {
-                return ImportState.Failed;
-                ;
-            }
-
-            var timeDifference = DateTime.Now - CreateAt;
-            if (timeDifference.Minutes > 1)
-            {
-                return ImportState.PartiallyFailed;
-                ;
-            }
-
-            return ImportState.Processing;
-            ;
-        }
+        Status = status;
     }
 
-    public override void BuildTree()
+    public string StatusName => Status.ToString();
+
+    public ImportState Status {  private set; get; }
+    
+    public ImportState GetStatus()
     {
-        throw new NotImplementedException();
+        if (SucceedEvents.Count == TotalCount)
+        {
+            return ImportState.Completed;
+        }
+
+        if (SucceedEvents.Count == 0 && FailedEvents.Count == TotalCount)
+        {
+            return ImportState.Failed;
+        }
+
+        var timeDifference = DateTime.Now - CreateAt;
+        if (timeDifference.Minutes > 1)
+        {
+            return ImportState.PartiallyFailed;
+            ;
+        }
+
+        return ImportState.Processing;
     }
 }

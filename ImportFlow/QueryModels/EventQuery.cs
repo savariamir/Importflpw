@@ -8,12 +8,10 @@ public class EventQuery
 
     public DateTime CreatedAt { get; set; }
 
-    public string? ErrorMessage { get;  set; }
-    
-    public ImportState Status { set; get; }
-    
-    public StateQuery? State {get;  set;}
-    
+    public string? ErrorMessage { get; set; }
+
+    public StateQuery? State { get; set; }
+
     public void Accept(IVisitor visitor)
     {
         visitor.Visit(this);

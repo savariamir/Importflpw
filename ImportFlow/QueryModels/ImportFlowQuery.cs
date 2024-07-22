@@ -16,6 +16,8 @@ public class ImportFlowQuery
     
     public string Status { set; get; }
 
+    public IEnumerable<string> Messages { set; get; } = [];
+
     public StateQuery State { get;  set; }
     
     public void Accept(IVisitor visitor)

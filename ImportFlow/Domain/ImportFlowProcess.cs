@@ -1,9 +1,8 @@
 using ImportFlow.Events;
-using ImportFlow.QueryModels;
 
 namespace ImportFlow.Domain;
 
-public class ImportFlowProcess: Import
+public class ImportFlowProcess
 {
     public Guid ImportFlowProcessId { get; private set; }
 
@@ -24,7 +23,7 @@ public class ImportFlowProcess: Import
     public IEnumerable<State<DataExported>>? DataExportState { get; private set; }
     
     
-    public State<SupplierFilesDownloaded> Tree { get; private set; }
+    public State<SupplierFilesDownloaded> Tree { get; set; }
     
     
     public void Accept(IImportFlowVisitor visitor)
@@ -106,10 +105,5 @@ public class ImportFlowProcess: Import
     public void Set(IEnumerable<State<DataExported>>? state)
     {
         DataExportState = state;
-    }
-
-    public override void BuildTree()
-    {
-        throw new NotImplementedException();
     }
 }

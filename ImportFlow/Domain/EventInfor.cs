@@ -4,13 +4,21 @@ namespace ImportFlow.Domain;
 
 public class EventNode<TEvent> where TEvent : ImportEvent
 {
-    public Guid EventId { get; set; }
+    public EventNode(TEvent @event)
+    {
+        Event = @event;
+    }
 
-    public DateTime CreatedAt { get; set; }
+    public TEvent Event { get; set; }
 
     public string? ErrorMessage { get; set; }
 
-    public ImportState Status { set; get; }
+    public ImportState? Status { set; get; }
 
-    public State<TEvent> State { get; set; }
+    public State<TEvent>? State { get; set; }
+    
+    public void Accept(IImportFlowVisitor visitor)
+    {
+        visitor.Visit(this);
+    }
 }

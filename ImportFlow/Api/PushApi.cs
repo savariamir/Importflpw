@@ -48,11 +48,6 @@ public class PushApi(
     public async Task<ImportFlowQuery> GatByIdAsync(Guid importFlowProcessId)
     {
         var import = await repository.GatByIdAsync(importFlowProcessId);
-
-        // var x = new ConvertToQuery2().GetByIdAsync(import);
-        //
-        // return x;
-
         var query = new ImportFlowQuery
         {
             ImportFlowProcessId = import.ImportFlowProcessId,
@@ -67,15 +62,17 @@ public class PushApi(
                 CorrelationId = import.DownloadedFilesState.CorrelationId,
                 CausationId = import.DownloadedFilesState.CausationId,
                 CreateAt = import.DownloadedFilesState.CreateAt,
-                Status = GetStatus(import),
+                // Status = GetStatus(import),
                 TotalCount = import.DownloadedFilesState.TotalCount,
                 Events = GetSupplierFilesEvents(import)
             }
         };
 
+        // var visitor = new StatusVisitor();
+        // visitor.Visit(query);
         return query;
     }
-    
+
     private IEnumerable<EventQuery> GetSupplierFilesEvents(ImportFlowProcess import)
     {
         var events = new List<EventQuery>();
@@ -85,20 +82,12 @@ public class PushApi(
             {
                 EventId = supplierFilesDownloaded.EventId,
                 CreatedAt = supplierFilesDownloaded.CreatedAt,
-                ErrorMessage = import.DownloadedFilesState.FailedEvents
-                    .FirstOrDefault(f => f.EventId == supplierFilesDownloaded.EventId)
-                    ?.ErrorMessage,
-                State = new StateQuery
-                {
-                    Name = StepsName.InitialLoad,
-                    Status =  import.DownloadedFilesState.FailedEvents
-                        .FirstOrDefault(f => f.EventId == supplierFilesDownloaded.EventId) != null? ImportState.Failed.ToString() 
-                        : ImportState.Processing.ToString()
-                }
+                ErrorMessage = GetErrorMessageFrom(import.DownloadedFilesState.FailedEvents, supplierFilesDownloaded.EventId),
+                State = CreateStateQueryModel(StepsName.Transformation, import.DownloadedFilesState.FailedEvents, supplierFilesDownloaded.EventId)
             };
 
-            var initialLoadState = import.InitialLoadState?
-                .FirstOrDefault(p => p.CausationId == supplierFilesDownloaded.EventId);
+            var initialLoadState =
+                import.InitialLoadState?.FirstOrDefault(p => p.CausationId == supplierFilesDownloaded.EventId);
             if (initialLoadState is not null)
             {
                 var initialLoadEvents = GetInitialLoadEvents(import, supplierFilesDownloaded);
@@ -109,7 +98,7 @@ public class PushApi(
                     CorrelationId = initialLoadState.CorrelationId,
                     CausationId = initialLoadState.CausationId,
                     CreateAt = initialLoadState.CreateAt,
-                    Status = initialLoadState.Status.ToString(),
+                    Status = initialLoadState.GetStatus().ToString(),
                     TotalCount = initialLoadState.TotalCount,
                     Events = initialLoadEvents
                 };
@@ -135,18 +124,10 @@ public class PushApi(
             {
                 EventId = initialLoadFinished.EventId,
                 CreatedAt = initialLoadFinished.CreatedAt,
-                ErrorMessage = state.FailedEvents
-                    .FirstOrDefault(f => f.EventId == initialLoadFinished.EventId)
-                    ?.ErrorMessage,
-                State = new StateQuery
-                {
-                    Name = StepsName.Transformation,
-                    Status = state.FailedEvents
-                        .FirstOrDefault(f => f.EventId == initialLoadFinished.EventId) != null? ImportState.Failed.ToString() 
-                        : ImportState.Processing.ToString()
-                }
+                ErrorMessage = GetErrorMessageFrom(state.FailedEvents, initialLoadFinished.EventId),
+                State = CreateStateQueryModel(StepsName.Transformation, state.FailedEvents, initialLoadFinished.EventId)
             };
-            
+
             var transformationState = import.TransformationState?
                 .FirstOrDefault(p => p.CausationId == initialLoadFinished.EventId);
 
@@ -159,7 +140,7 @@ public class PushApi(
                     CorrelationId = transformationState.CorrelationId,
                     CausationId = transformationState.CausationId,
                     CreateAt = transformationState.CreateAt,
-                    Status = transformationState.Status.ToString(),
+                    Status = transformationState.GetStatus().ToString(),
                     TotalCount = transformationState.TotalCount,
                     Events = transformationEvents
                 };
@@ -185,20 +166,12 @@ public class PushApi(
             {
                 EventId = transformationFinished.EventId,
                 CreatedAt = transformationFinished.CreatedAt,
-                ErrorMessage = state.FailedEvents
-                    .FirstOrDefault(f => f.EventId == transformationFinished.EventId)
-                    ?.ErrorMessage,
-                State = new StateQuery
-                {
-                    Name = StepsName.DateExport,
-                    Status = state.FailedEvents
-                        .FirstOrDefault(f => f.EventId == transformationFinished.EventId) != null? ImportState.Failed.ToString() 
-                        : ImportState.Processing.ToString()
-                }
+                ErrorMessage = GetErrorMessageFrom(state.FailedEvents, transformationFinished.EventId),
+                State = CreateStateQueryModel(StepsName.DateExport, state.FailedEvents, transformationFinished.EventId)
             };
 
-            var dataExportState = import.DataExportState?
-                .FirstOrDefault(p => p.CausationId == transformationFinished.EventId);
+            var dataExportState =
+                import.DataExportState?.FirstOrDefault(p => p.CausationId == transformationFinished.EventId);
             if (dataExportState is not null)
             {
                 var dataExportEvents = GetDataExportEvents(import, transformationFinished);
@@ -209,7 +182,7 @@ public class PushApi(
                     CorrelationId = dataExportState.CorrelationId,
                     CausationId = dataExportState.CausationId,
                     CreateAt = dataExportState.CreateAt,
-                    Status = dataExportState.Status.ToString(),
+                    Status = dataExportState.GetStatus().ToString(),
                     TotalCount = dataExportState.TotalCount,
                     Events = dataExportEvents
                 };
@@ -225,24 +198,40 @@ public class PushApi(
         TransformationFinished @event)
     {
         var events = new List<EventQuery>();
-
-        var state = import.DataExportState?
+        var state = import.DataExportState!
             .First(p => p.CausationId == @event.EventId);
-  
+
         foreach (var dataExported in state.Events)
         {
             var eventQuery = new EventQuery
             {
                 EventId = dataExported.EventId,
                 CreatedAt = dataExported.CreatedAt,
-                ErrorMessage = state.FailedEvents
-                    .FirstOrDefault(f => f.EventId == dataExported.EventId)
-                    ?.ErrorMessage
+                ErrorMessage = GetErrorMessageFrom(state.FailedEvents, dataExported.EventId),
+                State = CreateStateQueryModel(StepsName.DateExport, state.FailedEvents, dataExported.EventId),
             };
+            
             events.Add(eventQuery);
         }
 
         return events;
+    }
+    
+    private string? GetErrorMessageFrom(HashSet<Message> failedEvents, Guid eventId)
+    {
+        return failedEvents.FirstOrDefault(f => f.EventId == eventId)?.ErrorMessage;
+    }
+
+    private static StateQuery CreateStateQueryModel(string stepName, HashSet<Message> failedEvents, Guid eventId)
+    {
+        return new StateQuery
+        {
+            Name = stepName,
+            Status = failedEvents
+                .FirstOrDefault(f => f.EventId == eventId) != null
+                ? ImportState.Failed.ToString()
+                : ImportState.Processing.ToString()
+        };
     }
 
     public async Task<IEnumerable<ImportFlowQuery>> GetImportFlowListAsync()
@@ -260,6 +249,7 @@ public class PushApi(
                 CreateAt = import.CreateAt,
                 UpdatedAt = import.UpdatedAt,
                 Status = GetStatus(import),
+                // Messages = new []{ "Message 1", "Message 2"}
             };
 
             result.Add(query);
@@ -282,23 +272,23 @@ public class PushApi(
         }
 
 
-        var isDownloadSucceed = import.DownloadedFilesState.Status == ImportState.Completed;
+        var isDownloadSucceed = import.DownloadedFilesState.GetStatus() == ImportState.Completed;
 
 
         var filesTotalCount = import.DownloadedFilesState.TotalCount;
         var isInitialLoadSucceed = import.InitialLoadState != null &&
                                    import.InitialLoadState.Count() == filesTotalCount &&
-                                   import.InitialLoadState.All(p => p.Status == ImportState.Completed);
+                                   import.InitialLoadState.All(p => p.GetStatus() == ImportState.Completed);
 
         var transformationCount = import.InitialLoadState?.Sum(p => p.TotalCount);
         var isTransformationSucceed = import.TransformationState != null &&
                                       import.TransformationState.Count() == transformationCount &&
-                                      import.TransformationState.All(p => p.Status == ImportState.Completed);
+                                      import.TransformationState.All(p => p.GetStatus() == ImportState.Completed);
 
         var dateExportCount = import.TransformationState?.Sum(p => p.TotalCount);
         var isDateExportSucceed = import.DataExportState != null &&
                                   import.DataExportState.Count() == dateExportCount &&
-                                  import.DataExportState.All(p => p.Status == ImportState.Completed);
+                                  import.DataExportState.All(p => p.GetStatus() == ImportState.Completed);
 
 
         var isSucceed = isDownloadSucceed && isInitialLoadSucceed && isTransformationSucceed && isDateExportSucceed;
@@ -309,7 +299,7 @@ public class PushApi(
         }
 
         var anyDataExportCompleted = import.DataExportState?
-            .Any(p => p.Status == ImportState.Completed) ?? false;
+            .Any(p => p.GetStatus() == ImportState.Completed) ?? false;
 
         if (!anyDataExportCompleted && timeDifference.Minutes > 1)
         {
