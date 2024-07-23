@@ -1,4 +1,3 @@
-using ImportFlow.Consumers;
 using ImportFlow.Events;
 using ImportFlow.Framework;
 using MassTransit;

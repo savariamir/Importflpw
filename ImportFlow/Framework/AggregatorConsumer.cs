@@ -1,6 +1,5 @@
-using ImportFlow.Consumers;
+using ImportFlow.Domain.Repositories;
 using ImportFlow.Events;
-using ImportFlow.Framework.Domain.Repositories;
 using MassTransit;
 
 namespace ImportFlow.Framework;
@@ -13,6 +12,7 @@ public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStat
     {
         try
         {
+            // await repository.StartedAsync(context.Message);
             await consumer.Consume(context);
             await repository.SucceedAsync(context.Message);
         }

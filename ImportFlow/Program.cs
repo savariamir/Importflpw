@@ -1,10 +1,10 @@
 using ImportFlow;
 using ImportFlow.Api;
-using ImportFlow.Consumers;
+using ImportFlow.Application;
 using ImportFlow.Events;
 using ImportFlow.Framework;
-using ImportFlow.Framework.Domain.Repositories;
-using ImportFlow.Framework.Repositories;
+using ImportFlow.Infrastructure.Configs;
+using ImportFlow.Infrastructure.Subscriber.Consumers;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
