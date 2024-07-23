@@ -9,4 +9,5 @@ public interface IStateRepository<in TEvent> where TEvent : ImportEvent
     Task PublishingAsync(TEvent @event);
     Task SucceedAsync(TEvent @event);
     Task FailedAsync(TEvent @event, string errorMessage);
+    Task StartedAsync(TEvent @event);
 }

@@ -12,7 +12,7 @@ public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStat
     {
         try
         {
-            // await repository.StartedAsync(context.Message);
+            await repository.StartedAsync(context.Message);
             await consumer.Consume(context);
             await repository.SucceedAsync(context.Message);
         }

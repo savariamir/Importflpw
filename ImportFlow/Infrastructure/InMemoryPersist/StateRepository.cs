@@ -55,6 +55,5 @@ public class InMemoryStateRepository<TEvent> : IStateRepository<TEvent> where TE
 
     public async Task StartedAsync(TEvent @event)
     {
-        throw new NotImplementedException();
     }
 }
