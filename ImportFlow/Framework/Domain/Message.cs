@@ -1,4 +1,4 @@
-namespace ImportFlow.Domain;
+namespace ImportFlow.Framework.Domain;
 
 public class Message
 {

@@ -1,12 +1,12 @@
-using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
+using ImportFlow.Framework.Domain.Repositories;
 using MassTransit;
 using Retry = ImportFlow.Events.Retry;
 
-namespace ImportFlow.Api;
+namespace ImportFlow.Framework;
 
 public class MessageSender(
-    IStateRepositoryV2<ImportEvent> repository,
+    IStateRepository<ImportEvent> repository,
     IBus bus)
 {
     public async Task ResendAsync(MessageCommand command)
@@ -20,7 +20,7 @@ public class MessageSender(
 
             var newEvent = CloneEvent((dynamic)@event);
             
-            await repository.PublishedAsync(newEvent);
+            await repository.PublishingAsync(newEvent);
             await bus.Publish(newEvent);
             break;
         }

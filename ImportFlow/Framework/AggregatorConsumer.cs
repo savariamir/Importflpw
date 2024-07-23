@@ -1,10 +1,11 @@
-using ImportFlow.Domain.Repositories.V2;
+using ImportFlow.Consumers;
 using ImportFlow.Events;
+using ImportFlow.Framework.Domain.Repositories;
 using MassTransit;
 
-namespace ImportFlow.Consumers;
+namespace ImportFlow.Framework;
 
-public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStateRepositoryV2<ImportEvent> repository)
+public class AggregatorConsumer<TEvent>(IMessageConsumer<TEvent> consumer, IStateRepository<ImportEvent> repository)
     : IConsumer<TEvent>
     where TEvent : ImportEvent
 {

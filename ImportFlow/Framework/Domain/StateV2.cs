@@ -1,16 +1,16 @@
 using ImportFlow.Events;
 
-namespace ImportFlow.Domain.ModelsV2;
+namespace ImportFlow.Framework.Domain;
 
-public class StateV2
+public class State
 {
-    public Guid CorrelationId { get;private set; }
+    public Guid CorrelationId { get; private set; }
 
-    public Guid CausationId { get;private set; }
+    public Guid CausationId { get; private set; }
 
     public string Name { get; private set; }
 
-    public DateTime CreateAt { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
     public IEnumerable<string> GetMessages()
     {
@@ -20,30 +20,30 @@ public class StateV2
     public List<Message> FailedEvents { get; private set; } = new();
 
     public List<ImportEvent> Events { get; private set; } = new();
-    
+
     public List<ImportEvent> SucceedEvents { get; private set; } = new();
 
     public long TotalCount { get; private set; }
 
 
-    private StateV2(string name, Guid correlationId, Guid causationId, long totalCount)
+    private State(string name, Guid correlationId, Guid causationId, long totalCount)
     {
         CorrelationId = correlationId;
         CausationId = causationId;
         Name = name;
         TotalCount = totalCount;
-        CreateAt = DateTime.Now;
+        CreatedAt = DateTime.Now;
     }
-    
-    public static StateV2 Create(string name, Guid correlationId, Guid causationId, long totalCount)
+
+    public static State Create(string name, Guid correlationId, Guid causationId, long totalCount)
     {
-        return new StateV2(
+        return new State(
             name,
             correlationId,
             causationId,
             totalCount);
     }
-    
+
     public void Published(ImportEvent @event)
     {
         Events.Add(@event);
@@ -61,7 +61,7 @@ public class StateV2
 
     public string StatusName => Status.ToString();
 
-    public ImportStatus Status 
+    public ImportStatus Status
     {
         get
         {
@@ -70,15 +70,17 @@ public class StateV2
                 return ImportStatus.Completed;
             }
 
-            if (SucceedEvents.Count == 0 && FailedEvents.Count == TotalCount)
+            var timeDifference = DateTime.Now - CreatedAt;
+
+            if (SucceedEvents.Count == 0 && FailedEvents.Count == TotalCount && timeDifference.Seconds > 30)
             {
                 return ImportStatus.Failed;
             }
 
-            var timeDifference = DateTime.Now - CreateAt;
+
             if (timeDifference.Minutes > 1)
             {
-                return ImportStatus.PartiallyFailed;
+                return ImportStatus.PartialSuccess;
                 ;
             }
 

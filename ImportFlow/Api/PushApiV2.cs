@@ -1,28 +1,28 @@
-using ImportFlow.Domain;
-using ImportFlow.Domain.ModelsV2;
-using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
-using ImportFlow.QueryModels;
+using ImportFlow.Framework;
+using ImportFlow.Framework.Domain;
+using ImportFlow.Framework.Domain.Repositories;
 using MassTransit;
 
 namespace ImportFlow.Api;
 
-public class PushApiV2(
-    IImportFlowRepositoryV2 importFlowRepository,
-    IStateRepositoryV2<ImportEvent> downloadStepRepository,
+public class PushApi(
+    IStateRepository<ImportEvent> repository,
+    ImportFlowService importFlowService,
     IBus bus)
 {
     public async Task StartAsync()
     {
+        var correlationId = Guid.NewGuid();
         var info = new ImportFlowProcessInfo
         {
             PlatformId = 1,
             SupplierId = 21,
             FilesCount = 4,
-            CorrelationId = Guid.NewGuid(),
+            CorrelationId = correlationId,
         };
 
-        await StartAsync(info);
+        await importFlowService.StartAsync(info);
         //
 
 
@@ -30,38 +30,14 @@ public class PushApiV2(
         {
             var @event = new SupplierFilesDownloaded
             {
-                CorrelationId = info.CorrelationId,
-                CausationId = info.CorrelationId,
+                CorrelationId = correlationId,
+                CausationId = correlationId,
                 Number = i + 1
             };
             // ...
 
-            await downloadStepRepository.PublishedAsync(@event);
+            await repository.PublishingAsync(@event);
             await bus.Publish(@event);
         }
-    }
-
-    public async Task<IEnumerable<ImportFlowV2>> GetAsync()
-    {
-        return await importFlowRepository.GatAllAsync();
-    }
-
-    public async Task<ImportFlowQueryModel> GatByIdAsync(Guid importFlowProcessId)
-    {
-        var import = await importFlowRepository.GatByIdAsync(importFlowProcessId);
-        return new ImportFlowBuilder().Build(import);
-    }
-
-    public async Task<IEnumerable<ImportFlowQueryModel>> GetImportFlowListAsync()
-    {
-        var imports = await importFlowRepository.GatAllAsync();
-        var result = new ImportFlowBuilder().GetImportFlowList(imports);
-        return result;
-    }
-
-    private async Task StartAsync(ImportFlowProcessInfo info)
-    {
-        var importFlow = ImportFlowV2.Start(info);
-        await importFlowRepository.AddAsync(importFlow);
     }
 }

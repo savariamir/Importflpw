@@ -1,12 +1,11 @@
-using ImportFlow.Domain;
-using ImportFlow.Domain.ModelsV2;
-using ImportFlow.QueryModels;
+using ImportFlow.Framework.Domain;
+using ImportFlow.Framework.QueryModels;
 
-namespace ImportFlow.Api;
+namespace ImportFlow.Framework;
 
-public class ImportFlowBuilder
+public class QueryModelBuilder
 {
-    public ImportFlowQueryModel Build(ImportFlowV2 import)
+    public ImportFlowQueryModel Build(Domain.ImportFlow import)
     {
         var model = new ImportFlowQueryModel
         {
@@ -20,22 +19,25 @@ public class ImportFlowBuilder
                 Name = StepsName.SupplierFiles,
                 CorrelationId = import.DownloadedFilesState.CorrelationId,
                 CausationId = import.DownloadedFilesState.CausationId,
-                CreateAt = import.DownloadedFilesState.CreateAt,
+                CreateAt = import.DownloadedFilesState.CreatedAt,
                 TotalCount = import.DownloadedFilesState.TotalCount,
                 Events = CreateEventsV2(import, import.DownloadedFilesState)
             }
         };
         
-        var visitor = new StatusVisitor();
-        visitor.Visit(model);
+        var statusVisitor = new StatusVisitor();
+        statusVisitor.Visit(model);
+        
+        var messagesVisitor = new LogVisitor();
+        messagesVisitor.Visit(model);
 
         return model;
     }
 
-    public IEnumerable<ImportFlowQueryModel> GetImportFlowList(IEnumerable<ImportFlowV2> imports)
+    public IEnumerable<ImportFlowQueryModel> GetImportFlowList(IEnumerable<Domain.ImportFlow> imports)
     {
         var result = new List<ImportFlowQueryModel>();
-        var visitor = new MessageVisitor();
+        var visitor = new LogVisitor();
         foreach (var import in imports)
         {
             var query1 = Build(import);
@@ -50,75 +52,15 @@ public class ImportFlowBuilder
             //     Status = GetStatus(import),
             //     // Messages = new []{ "Message 1", "Message 2"}
             // };
-
-            query1.Messages = visitor.GetMessages;
             result.Add(query1);
         }
 
         return result;
     }
 
-    private string GetStatus(ImportFlowV2 import)
-    {
-        var timeDifference = DateTime.Now - import.CreateAt;
-        if (timeDifference.Minutes > 1 && import.DataExportState?.Count() == 0)
-        {
-            return ImportStatus.Failed.ToString();
-        }
-
-        if (import.DataExportState?.Count() == 0)
-        {
-            return ImportStatus.Processing.ToString();
-        }
-
-
-        var isDownloadSucceed = import.DownloadedFilesState.Status == ImportStatus.Completed;
-
-
-        var filesTotalCount = import.DownloadedFilesState.TotalCount;
-        var isInitialLoadSucceed = import.InitialLoadState != null &&
-                                   import.InitialLoadState.Count() == filesTotalCount &&
-                                   import.InitialLoadState.All(p => p.Status == ImportStatus.Completed);
-
-        var transformationCount = import.InitialLoadState?.Sum(p => p.TotalCount);
-        var isTransformationSucceed = import.TransformationState != null &&
-                                      import.TransformationState.Count() == transformationCount &&
-                                      import.TransformationState.All(p => p.Status == ImportStatus.Completed);
-
-        var dateExportCount = import.TransformationState?.Sum(p => p.TotalCount);
-        var isDateExportSucceed = import.DataExportState != null &&
-                                  import.DataExportState.Count() == dateExportCount &&
-                                  import.DataExportState.All(p => p.Status == ImportStatus.Completed);
-
-
-        var isSucceed = isDownloadSucceed && isInitialLoadSucceed && isTransformationSucceed && isDateExportSucceed;
-
-        if (isSucceed)
-        {
-            return ImportStatus.Completed.ToString();
-        }
-
-        var anyDataExportCompleted = import.DataExportState?
-            .Any(p => p.Status == ImportStatus.Completed) ?? false;
-
-        if (!anyDataExportCompleted && timeDifference.Minutes > 1)
-        {
-            return ImportStatus.Failed.ToString();
-        }
-
-        if (anyDataExportCompleted && timeDifference.Minutes > 1)
-        {
-            return ImportStatus.PartiallyFailed.ToString();
-        }
-
-        return ImportStatus.Processing.ToString();
-    }
-
-
-    private IEnumerable<EventQueryModel> CreateEventsV2(ImportFlowV2 import, StateV2 currentState)
+    private IEnumerable<EventQueryModel> CreateEventsV2(Domain.ImportFlow import, State currentState)
     {
         var events = new List<EventQueryModel>();
-        
         foreach (var @event in currentState.Events)
         {
             var eventQuery = new EventQueryModel
@@ -153,7 +95,7 @@ public class ImportFlowBuilder
                     Name = nextState.Name,
                     CorrelationId = nextState.CorrelationId,
                     CausationId = nextState.CausationId,
-                    CreateAt = nextState.CreateAt,
+                    CreateAt = nextState.CreatedAt,
                     Status = nextState.Status.ToString(),
                     TotalCount = nextState.TotalCount,
                     Events = initialLoadEvents
@@ -166,19 +108,14 @@ public class ImportFlowBuilder
         return events;
     }
 
-    // private long GetDuration()
-    // {
-    //     return 
-    // }
-
-    private static IEnumerable<StateV2>? GetNextState(ImportFlowV2 import, string currentStateName)
+    private static IEnumerable<State>? GetNextState(Domain.ImportFlow import, string currentStateName)
     {
         return currentStateName switch
         {
             StepsName.SupplierFiles => import.InitialLoadState,
             StepsName.InitialLoad => import.TransformationState,
             StepsName.Transformation => import.DataExportState,
-            StepsName.DateExport => Enumerable.Empty<StateV2>(),
+            StepsName.DateExport => Enumerable.Empty<State>(),
             _ => throw new ArgumentOutOfRangeException(nameof(currentStateName), currentStateName, null)
         };
     }
@@ -192,7 +129,9 @@ public class ImportFlowBuilder
             Status = failedEvents
                 .FirstOrDefault(f => f.EventId == eventId) != null
                 ? ImportStatus.Failed.ToString()
-                : ImportStatus.Processing.ToString()
+                : ImportStatus.Processing.ToString(),
+            CreateAt = DateTime.Now
+            
         };
     }
 }

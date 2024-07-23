@@ -1,7 +1,7 @@
 using ImportFlow.Events;
 using MassTransit;
 
-namespace ImportFlow.Consumers;
+namespace ImportFlow.Framework;
 
 public interface IMessageConsumer<in T> where T : ImportEvent
 {

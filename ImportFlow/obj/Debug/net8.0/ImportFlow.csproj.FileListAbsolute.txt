@@ -48,3 +48,4 @@
 /Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.genruntimeconfig.cache
 /Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ref/ImportFlow.dll
 /Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/bin/Debug/net8.0/AutoMapper.dll
+/Users/amirsavari/Projects/Sunweb/ImportFlow/ImportFlow/obj/Debug/net8.0/ImportFlow.sourcelink.json

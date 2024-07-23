@@ -1,20 +1,20 @@
 using System.Collections.Concurrent;
-using ImportFlow.Domain.ModelsV2;
-using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
+using ImportFlow.Framework.Domain;
+using ImportFlow.Framework.Domain.Repositories;
 
-namespace ImportFlow.Repositories.V2;
+namespace ImportFlow.Framework.Repositories;
 
-public class StateRepositoryV2<TEvent> : IStateRepositoryV2<TEvent> where TEvent : ImportEvent
+public class StateRepository<TEvent> : IStateRepository<TEvent> where TEvent : ImportEvent
 {
-    private readonly ConcurrentDictionary<(Guid CorrelationId, Guid CausationId), StateV2> _states = new();
-    public Task AddAsync(StateV2 state)
+    private readonly ConcurrentDictionary<(Guid CorrelationId, Guid CausationId), State> _states = new();
+    public Task AddAsync(State state)
     {
         var added = _states.TryAdd((state.CorrelationId, state.CausationId), state);
         return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<StateV2>> GetAsync(Guid correlationId)
+    public Task<IEnumerable<State>> GetAsync(Guid correlationId)
     {
         var result = _states
             .Where(kvp => kvp.Key.CorrelationId == correlationId)
@@ -23,7 +23,7 @@ public class StateRepositoryV2<TEvent> : IStateRepositoryV2<TEvent> where TEvent
         return Task.FromResult(result);
     }
 
-    public Task PublishedAsync(TEvent message)
+    public Task PublishingAsync(TEvent message)
     {
         if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var state))
         {

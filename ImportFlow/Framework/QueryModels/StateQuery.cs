@@ -1,4 +1,4 @@
-namespace ImportFlow.QueryModels;
+namespace ImportFlow.Framework.QueryModels;
 
 public class StateQueryModel
 {

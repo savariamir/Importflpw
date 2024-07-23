@@ -1,9 +1,10 @@
 using ImportFlow;
 using ImportFlow.Api;
 using ImportFlow.Consumers;
-using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
-using ImportFlow.Repositories.V2;
+using ImportFlow.Framework;
+using ImportFlow.Framework.Domain.Repositories;
+using ImportFlow.Framework.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,22 +16,18 @@ var configuration = ((IConfigurationBuilder)builder.Configuration).Build();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddTransient<PushApiV2>();
-builder.Services.AddTransient<MessageSender>();
+builder.Services.AddTransient<PushApi>();
+
 
 builder.Services.AddMassTransit(configuration);
 
-builder.Services.AddSingleton<IImportFlowRepositoryV2, ImportFlowRepositoryV2>();
 
-
-builder.Services.AddSingleton<IStateRepositoryV2<ImportEvent>, StateRepositoryV2<ImportEvent>>();
-// builder.Services.AddSingleton<IStateRepositoryV2<InitialLoadFinished>, StateRepositoryV2<InitialLoadFinished>>();
-// builder.Services.AddSingleton<IStateRepositoryV2<TransformationFinished>, StateRepositoryV2<TransformationFinished>>();
-// builder.Services.AddSingleton<IStateRepositoryV2<DataExported>, StateRepositoryV2<DataExported>>();
+builder.Services.AddImportFlowServices();
 
 builder.Services.AddScoped<IMessageConsumer<SupplierFilesDownloaded>, InitialLoadConsumer>();
 builder.Services.AddScoped<IMessageConsumer<InitialLoadFinished>, TransformationConsumer>();
 builder.Services.AddScoped<IMessageConsumer<TransformationFinished>, DataExportConsumer>();
+
 
 
 builder.Services.AddCors(options =>
@@ -63,15 +60,15 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/push-api", async (PushApiV2 pushApi) => { await pushApi.StartAsync(); })
+app.MapGet("/push-api", async (PushApi pushApi) => { await pushApi.StartAsync(); })
     .WithName("PushApi")
     .WithOpenApi();
 
-app.MapGet("/get", async (PushApiV2 pushApi) => await pushApi.GetAsync())
+app.MapGet("/get", async (ImportFlowService importFlowService) => await importFlowService.GetAsync())
     .WithName("Get")
     .WithOpenApi();
 
-app.MapGet("/get-list", async (PushApiV2 pushApi) => await pushApi.GetImportFlowListAsync())
+app.MapGet("/get-list", async (ImportFlowService importFlowService) => await importFlowService.GetImportFlowListAsync())
     .WithName("GetList")
     .WithOpenApi();
 
@@ -81,14 +78,9 @@ app.MapPost("/send",
     .WithOpenApi();
 
 
-app.MapGet("/get-list/{id}", async (PushApiV2 pushApi, Guid id) => await pushApi.GatByIdAsync(id))
+app.MapGet("/get-list/{id}", async (ImportFlowService importFlowService, Guid id) => await importFlowService.GatByIdAsync(id))
     .WithName("GetById")
     .WithOpenApi();
 
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -1,4 +1,4 @@
-namespace ImportFlow.QueryModels;
+namespace ImportFlow.Framework.QueryModels;
 
 public class ImportFlowQueryModel
 {
@@ -6,7 +6,7 @@ public class ImportFlowQueryModel
 
     public int PlatformId { get;  set; }
 
-    public string Platform { get; set; } = "Travelgate";
+    public string Platform { get; set; } = "Dingus";
 
     public int? SupplierId { get;  set; }
 

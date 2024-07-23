@@ -1,12 +1,13 @@
-using ImportFlow.Domain;
-using ImportFlow.Domain.ModelsV2;
-using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
+using ImportFlow.Framework;
+using ImportFlow.Framework.Domain;
+using ImportFlow.Framework.Domain.Repositories;
 using MassTransit;
+using State = ImportFlow.Framework.Domain.State;
 
 namespace ImportFlow.Consumers;
 
-public class TransformationConsumer(IStateRepositoryV2<ImportEvent> repository)
+public class TransformationConsumer(IStateRepository<ImportEvent> repository)
     : IMessageConsumer<InitialLoadFinished>
 {
     public async Task Consume(ConsumeContext<InitialLoadFinished> context)
@@ -17,7 +18,7 @@ public class TransformationConsumer(IStateRepositoryV2<ImportEvent> repository)
      
         var causationId = context.Message.EventId;
         
-        var state = StateV2.Create(
+        var state = State.Create(
             StepsName.Transformation,
             context.Message.CorrelationId,
             causationId, 3);
@@ -29,7 +30,7 @@ public class TransformationConsumer(IStateRepositoryV2<ImportEvent> repository)
             throw new Exception($"Something went wrong in Transformation {DateTime.Now.TimeOfDay}");
         }
         
-        await Task.Delay(10000);
+        await Task.Delay(5000);
 
         for (var i = 0; i < 3; i++)
         {
@@ -41,7 +42,7 @@ public class TransformationConsumer(IStateRepositoryV2<ImportEvent> repository)
             };
             // ...
 
-            await repository.PublishedAsync(@event);
+            await repository.PublishingAsync(@event);
             await context.Publish(@event);
         }
     }

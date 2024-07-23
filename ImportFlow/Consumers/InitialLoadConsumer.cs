@@ -1,12 +1,13 @@
-using ImportFlow.Domain;
-using ImportFlow.Domain.ModelsV2;
-using ImportFlow.Domain.Repositories.V2;
 using ImportFlow.Events;
+using ImportFlow.Framework;
+using ImportFlow.Framework.Domain;
+using ImportFlow.Framework.Domain.Repositories;
 using MassTransit;
+using State = ImportFlow.Framework.Domain.State;
 
 namespace ImportFlow.Consumers;
 
-public class InitialLoadConsumer(IStateRepositoryV2<ImportEvent> repository)
+public class InitialLoadConsumer(IStateRepository<ImportEvent> repository)
     : IMessageConsumer<SupplierFilesDownloaded>
 {
     public async Task Consume(ConsumeContext<SupplierFilesDownloaded> context)
@@ -16,7 +17,7 @@ public class InitialLoadConsumer(IStateRepositoryV2<ImportEvent> repository)
 
         var causationId = context.Message.EventId;
 
-        var state =StateV2.Create(
+        var state =State.Create(
             StepsName.InitialLoad,
             context.Message.CorrelationId,
             causationId, 5);
@@ -24,12 +25,12 @@ public class InitialLoadConsumer(IStateRepositoryV2<ImportEvent> repository)
 
         await repository.AddAsync(state);
 
-        if (number == 1)
-        {
-            throw new Exception($"Something went wrong in Initial Load {DateTime.Now.TimeOfDay}");
-        }
+        // if (number == 1)
+        // {
+        //     throw new Exception($"Something went wrong in Initial Load {DateTime.Now.TimeOfDay}");
+        // }
 
-        await Task.Delay(10000);
+        await Task.Delay(1000);
 
         for (var i = 0; i < 5; i++)
         {
@@ -41,7 +42,7 @@ public class InitialLoadConsumer(IStateRepositoryV2<ImportEvent> repository)
             };
             // ...
 
-            await repository.PublishedAsync(@event);
+            await repository.PublishingAsync(@event);
             await context.Publish(@event);
         }
     }
