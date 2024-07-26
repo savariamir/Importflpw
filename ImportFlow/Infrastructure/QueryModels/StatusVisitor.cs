@@ -12,17 +12,15 @@ public class StatusVisitor : IVisitor
 
     public void Visit(StateQueryModel state)
     {
+        if (ImportStepService.IsStepLeaf(state.Name))
+        {
+            return;
+        }
+        
         var isStateExpired = (DateTime.Now - state.CreateAt).Minutes > 1;
         if (state.Events is null)
         {
             state.Status = isStateExpired ? ImportStatus.Failed.ToString() : ImportStatus.Processing.ToString();
-            return;
-        }
-
-        var isAllEventsAdded = state.Events.Count() == state.TotalCount;
-        if (IsStepLeaf(state) && isAllEventsAdded)
-        {
-            state.Status = ImportStatus.Completed.ToString();
             return;
         }
 
@@ -38,7 +36,9 @@ public class StatusVisitor : IVisitor
             state.Status = ImportStatus.Processing.ToString();
             return;
         }
-
+        
+        
+        var isAllEventsAdded = state.Events.Count() == state.TotalCount;
         if (statuses.All(s => s == ImportStatus.Completed.ToString()) && isAllEventsAdded)
         {
             state.Status = ImportStatus.Completed.ToString();
@@ -64,44 +64,5 @@ public class StatusVisitor : IVisitor
     {
         eventQueryModel.State?.Accept(this);
     }
-
-    private static bool IsStepLeaf(StateQueryModel state)
-    {
-        return state.Name == StepsName.DateExport;
-    }
-}
-
-public class LastUpdateVisitor : IVisitor
-{
-    private DateTime? _lastUpdate;
-
-    public void Visit(StateQueryModel state)
-    {
-        if (state.Events is null)
-        {
-            return;
-        }
-
-        foreach (var eventQuery in state.Events)
-        {
-            eventQuery.Accept(this);
-        }
-    }
-
-    public void Visit(ImportFlowQueryModel importFlow)
-    {
-        importFlow.State?.Accept(this);
-    }
-
-    public void Visit(EventQueryModel @event)
-    {
-        if (_lastUpdate is null)
-        {
-            _lastUpdate = @event.CreatedAt;
-        }
-        else if(_lastUpdate <  @event.CreatedAt)
-        {
-            _lastUpdate = @event.CreatedAt;
-        }
-    }
+    
 }

@@ -7,27 +7,26 @@ using MassTransit;
 
 namespace ImportFlow.Api;
 
-public class PushApi(
-    IStateRepository<ImportEvent> repository,
-    ImportFlowService importFlowService,
-    IBus bus)
+public class PushApi(MessagePublisher messagePublisher, ImportMonitoring monitoring)
 {
     public async Task StartAsync()
     {
         var correlationId = Guid.NewGuid();
-        var info = new ImportFlowProcessInfo
+        var totalEventsCount = 4;
+        var info = new ImportProcessOptions
         {
+            StepName = StepsName.PushApi,
             PlatformId = 1,
             SupplierId = 21,
-            FilesCount = 4,
+            TotalEventsCount = totalEventsCount,
             CorrelationId = correlationId,
         };
 
-        await importFlowService.StartAsync(info);
+        await monitoring.StartAsync(info);
         //
 
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < totalEventsCount; i++)
         {
             var @event = new SupplierFilesDownloaded
             {
@@ -37,8 +36,7 @@ public class PushApi(
             };
             // ...
 
-            await repository.PublishingAsync(@event);
-            await bus.Publish(@event);
+            await messagePublisher.PublishAsync(@event);
         }
     }
 }

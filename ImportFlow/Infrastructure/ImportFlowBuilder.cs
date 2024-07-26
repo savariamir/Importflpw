@@ -2,11 +2,11 @@ using ImportFlow.Domain;
 using ImportFlow.Events;
 using ImportFlow.Infrastructure.QueryModels;
 
-namespace ImportFlow.Infrastructure.Query;
+namespace ImportFlow.Infrastructure;
 
 public abstract class QueryModelBuilder
 {
-    public static ImportFlowQueryModel Build(ImportFlowProcess import)
+    public static ImportFlowQueryModel Build(ImportProcess import)
     {
         var model = new ImportFlowQueryModel
         {
@@ -17,7 +17,7 @@ public abstract class QueryModelBuilder
             UpdatedAt = import.UpdatedAt,
             State = new StateQueryModel
             {
-                Name = StepsName.SupplierFiles,
+                Name = StepsName.PushApi,
                 CorrelationId = import.DownloadedFilesState.CorrelationId,
                 CausationId = import.DownloadedFilesState.CausationId,
                 CreateAt = import.DownloadedFilesState.CreatedAt,
@@ -31,14 +31,11 @@ public abstract class QueryModelBuilder
 
         var messagesVisitor = new LogVisitor();
         messagesVisitor.Visit(model);
-        
-        var lastUpdateVisitor = new LastUpdateVisitor();
-        lastUpdateVisitor.Visit(model);
 
         return model;
     }
-    
-    public static IEnumerable<ImportFlowQueryModel> GetImportFlowList(IEnumerable<ImportFlowProcess> imports)
+
+    public static IEnumerable<ImportFlowQueryModel> GetImportFlowList(IEnumerable<ImportProcess> imports)
     {
         var result = new List<ImportFlowQueryModel>();
         var visitor = new LogVisitor();
@@ -52,7 +49,7 @@ public abstract class QueryModelBuilder
         return result;
     }
 
-    private static IEnumerable<EventQueryModel> CreateEvents(ImportFlowProcess import, State currentState)
+    private static IEnumerable<EventQueryModel> CreateEvents(ImportProcess import, State currentState)
     {
         var events = new List<EventQueryModel>();
         foreach (var @event in currentState.Events)
@@ -115,11 +112,11 @@ public abstract class QueryModelBuilder
             });
     }
 
-    private static IEnumerable<State>? GetNextState(ImportFlowProcess import, string currentStateName)
+    private static IEnumerable<State>? GetNextState(ImportProcess import, string currentStateName)
     {
         return currentStateName switch
         {
-            StepsName.SupplierFiles => import.InitialLoadState,
+            StepsName.PushApi => import.InitialLoadState,
             StepsName.InitialLoad => import.TransformationState,
             StepsName.Transformation => import.DataExportState,
             StepsName.DateExport => Enumerable.Empty<State>(),
@@ -132,7 +129,7 @@ public abstract class QueryModelBuilder
     {
         return new StateQueryModel
         {
-            Name = ImportProcess.GetNextName(stepName),
+            Name = ImportStepService.GetNextName(stepName),
             Status = failedEvents
                 .FirstOrDefault(f => f.EventId == eventId) != null
                 ? ImportStatus.Failed.ToString()

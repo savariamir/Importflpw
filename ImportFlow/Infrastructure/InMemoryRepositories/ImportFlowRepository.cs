@@ -1,21 +1,22 @@
+using ImportFlow.Domain;
 using ImportFlow.Domain.Repositories;
 using ImportFlow.Events;
 
-namespace ImportFlow.Infrastructure.InMemoryPersist;
+namespace ImportFlow.Infrastructure.InMemoryRepositories;
 
 public class InMemoryImportFlowRepository(
     IStateRepository<ImportEvent> repository
 ) : IImportFlowRepository
 {
-    private readonly List<Domain.ImportFlowProcess> _database = new();
+    private readonly List<ImportProcess> _database = new();
 
-    public async Task AddAsync(Domain.ImportFlowProcess import)
+    public async Task AddAsync(ImportProcess import)
     {
         _database.Add(import);
         await repository.AddAsync(import.DownloadedFilesState);
     }
 
-    public async Task<IEnumerable<Domain.ImportFlowProcess>> GatAllAsync()
+    public async Task<IEnumerable<ImportProcess>> GatAllAsync()
     {
         foreach (var importFlowProcess in _database)
         {
@@ -26,7 +27,7 @@ public class InMemoryImportFlowRepository(
         return _database.OrderByDescending(p => p.CreateAt);
     }
 
-    public async Task<Domain.ImportFlowProcess> GatByIdAsync(Guid importFlowProcessId)
+    public async Task<ImportProcess> GatByIdAsync(Guid importFlowProcessId)
     {
         var first = _database.FirstOrDefault(p => p.Id == importFlowProcessId);
         if (first is null)

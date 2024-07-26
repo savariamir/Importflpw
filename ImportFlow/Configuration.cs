@@ -1,18 +1,23 @@
 using ImportFlow.Events;
 using ImportFlow.Framework;
+using ImportFlow.Infrastructure.Consumers;
 using MassTransit;
 
 namespace ImportFlow;
 
 public static class Configuration
 {
-    public static IServiceCollection AddMassTransit(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddMessaging(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<IMessageConsumer<SupplierFilesDownloaded>, InitialLoadConsumer>();
+        services.AddScoped<IMessageConsumer<InitialLoadFinished>, TransformationConsumer>();
+        services.AddScoped<IMessageConsumer<TransformationFinished>, DataExportConsumer>();
+        
         services.AddMassTransit(mt =>
         {
-            mt.AddConsumer<AggregatorConsumer<SupplierFilesDownloaded>>();
-            mt.AddConsumer<AggregatorConsumer<InitialLoadFinished>>();
-            mt.AddConsumer<AggregatorConsumer<TransformationFinished>>();
+            mt.AddConsumer<BaseConsumer<SupplierFilesDownloaded>>();
+            mt.AddConsumer<BaseConsumer<InitialLoadFinished>>();
+            mt.AddConsumer<BaseConsumer<TransformationFinished>>();
 
             mt.UsingAzureServiceBus((context, cfg) =>
             {
@@ -26,7 +31,7 @@ public static class Configuration
                     {
                         x.Incremental(5, TimeSpan.FromMicroseconds(10), TimeSpan.FromMicroseconds(5));
                     });
-                    ec.ConfigureConsumer<AggregatorConsumer<SupplierFilesDownloaded>>(context);
+                    ec.ConfigureConsumer<BaseConsumer<SupplierFilesDownloaded>>(context);
                 });
                 
                 cfg.ReceiveEndpoint("transformation", ec =>
@@ -38,7 +43,7 @@ public static class Configuration
                     {
                         x.Incremental(5, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
                     });
-                    ec.ConfigureConsumer<AggregatorConsumer<InitialLoadFinished>>(context);
+                    ec.ConfigureConsumer<BaseConsumer<InitialLoadFinished>>(context);
                 });
                 
                 cfg.ReceiveEndpoint("data-export", ec =>
@@ -50,7 +55,7 @@ public static class Configuration
                     {
                         x.Incremental(5, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
                     });
-                    ec.ConfigureConsumer<AggregatorConsumer<TransformationFinished>>(context);
+                    ec.ConfigureConsumer<BaseConsumer<TransformationFinished>>(context);
                 });
             });
         });

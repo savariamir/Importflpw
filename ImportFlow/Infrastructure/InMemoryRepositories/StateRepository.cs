@@ -3,7 +3,7 @@ using ImportFlow.Domain;
 using ImportFlow.Domain.Repositories;
 using ImportFlow.Events;
 
-namespace ImportFlow.Infrastructure.InMemoryPersist;
+namespace ImportFlow.Infrastructure.InMemoryRepositories;
 
 public class InMemoryStateRepository<TEvent> : IStateRepository<TEvent> where TEvent : ImportEvent
 {
@@ -23,37 +23,43 @@ public class InMemoryStateRepository<TEvent> : IStateRepository<TEvent> where TE
         return Task.FromResult(result);
     }
 
-    public Task PublishingAsync(TEvent message)
+    public Task AddEventAsync(TEvent message)
     {
         if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var state))
         {
-            state.Published(message);
+            state.Add(message);
         }
 
         return Task.CompletedTask;
     }
-
-    public Task SucceedAsync(TEvent message)
+    
+    public Task SucceedEventAsync(TEvent message)
     {
-        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var processInfo))
+        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var state))
         {
-            processInfo.Finished(message);
+            state.Succeed(message);
         }
 
         return Task.CompletedTask;
     }
 
-    public Task FailedAsync(TEvent message, string errorMessage)
+    public Task FailedEventAsync(TEvent message, string errorMessage)
     {
-        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var processInfo))
+        if (_states.TryGetValue((message.CorrelationId, message.CausationId), out var state))
         {
-            processInfo.Failed(message, errorMessage);
+            state.Fail(message, errorMessage);
         }
 
         return Task.CompletedTask;
     }
 
-    public async Task StartedAsync(TEvent @event)
+    public Task FinishState(Guid correlationId, Guid causationId)
     {
+        if (_states.TryGetValue((correlationId, causationId), out var state))
+        {
+            state.Finish();
+        }
+
+        return Task.CompletedTask;
     }
 }

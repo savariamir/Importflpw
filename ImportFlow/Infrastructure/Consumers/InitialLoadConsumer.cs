@@ -1,49 +1,45 @@
+using ImportFlow.Application;
 using ImportFlow.Domain;
-using ImportFlow.Domain.Repositories;
 using ImportFlow.Events;
 using ImportFlow.Framework;
 using MassTransit;
-using State = ImportFlow.Domain.State;
 
-namespace ImportFlow.Infrastructure.Subscriber.Consumers;
+namespace ImportFlow.Infrastructure.Consumers;
 
-public class InitialLoadConsumer(IStateRepository<ImportEvent> repository)
+public class InitialLoadConsumer(MessagePublisher messagePublisher, ImportMonitoring monitoring)
     : IMessageConsumer<SupplierFilesDownloaded>
 {
     public async Task Consume(ConsumeContext<SupplierFilesDownloaded> context)
     {
-        var random = new Random();
-        var number = random.Next(1, 10);
-
-        var causationId = context.Message.EventId;
-
-        var state =State.Create(
+        // Start consuming
+        var totalEventsCount = 5;
+        await monitoring.StartStateAsync(
             StepsName.InitialLoad,
             context.Message.CorrelationId,
-            causationId, 5);
-        
+            context.Message.EventId,
+            totalEventsCount);
 
-        await repository.AddAsync(state);
-
+        // var random = new Random();
+        // var number = random.Next(1, 10);
         // if (number == 1)
         // {
         //     throw new Exception($"Something went wrong in Initial Load {DateTime.Now.TimeOfDay}");
         // }
 
+        // Processing
         await Task.Delay(1000);
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < totalEventsCount; i++)
         {
             var @event = new InitialLoadFinished
             {
                 CorrelationId = context.Message.CorrelationId,
-                CausationId = causationId,
+                CausationId = context.Message.EventId,
                 Number = i + 1
             };
             // ...
 
-            await repository.PublishingAsync(@event);
-            await context.Publish(@event);
+            await messagePublisher.PublishAsync(@event);
         }
     }
 }

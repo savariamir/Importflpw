@@ -3,8 +3,8 @@ using ImportFlow.Api;
 using ImportFlow.Application;
 using ImportFlow.Events;
 using ImportFlow.Framework;
-using ImportFlow.Infrastructure.Configs;
-using ImportFlow.Infrastructure.Subscriber.Consumers;
+using ImportFlow.Infrastructure;
+using ImportFlow.Infrastructure.Consumers;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,16 +17,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<PushApi>();
-
-
-builder.Services.AddMassTransit(configuration);
-
-
+builder.Services.AddMessaging(configuration);
 builder.Services.AddImportFlowServices();
-
-builder.Services.AddScoped<IMessageConsumer<SupplierFilesDownloaded>, InitialLoadConsumer>();
-builder.Services.AddScoped<IMessageConsumer<InitialLoadFinished>, TransformationConsumer>();
-builder.Services.AddScoped<IMessageConsumer<TransformationFinished>, DataExportConsumer>();
 
 
 
@@ -64,21 +56,21 @@ app.MapGet("/push-api", async (PushApi pushApi) => { await pushApi.StartAsync();
     .WithName("PushApi")
     .WithOpenApi();
 
-app.MapGet("/get", async (ImportFlowService importFlowService) => await importFlowService.GetAsync())
+app.MapGet("/get", async (ImportMonitoring importFlowService) => await importFlowService.GetAllAsync())
     .WithName("Get")
     .WithOpenApi();
 
-app.MapGet("/get-list", async (ImportFlowService importFlowService) => await importFlowService.GetImportFlowListAsync())
+app.MapGet("/get-list", async (ImportMonitoring importFlowService) => await importFlowService.GetImportFlowListAsync())
     .WithName("GetList")
     .WithOpenApi();
 
 app.MapPost("/send",
-        async (MessageSender sender, [FromBody] MessageCommand command) => await sender.ResendAsync(command))
+        async (MessageRePublisher sender, [FromBody] MessageCommand command) => await sender.ResendAsync(command))
     .WithName("Send")
     .WithOpenApi();
 
 
-app.MapGet("/get-list/{id}", async (ImportFlowService importFlowService, Guid id) => await importFlowService.GatByIdAsync(id))
+app.MapGet("/get/{id}", async (ImportMonitoring importFlowService, Guid id) => await importFlowService.GatByIdAsync(id))
     .WithName("GetById")
     .WithOpenApi();
 

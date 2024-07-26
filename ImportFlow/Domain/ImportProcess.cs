@@ -1,29 +1,52 @@
-using ImportFlow.Events;
-
 namespace ImportFlow.Domain;
 
-public static class ImportProcess
+public class ImportProcess
 {
-    public static string GetNextName(string stateName)
+    public Guid Id { get; private set; }
+
+    public int PlatformId { get; private set; }
+
+    public int? SupplierId { get; private set; }
+
+    public DateTime CreateAt { get; private set; }
+
+    public DateTime? UpdatedAt { get; private set; }
+
+    public State DownloadedFilesState { get; private set; }
+
+    public IEnumerable<State>? InitialLoadState { get; private set; }
+
+    public IEnumerable<State>? TransformationState { get; private set; }
+
+    public IEnumerable<State>? DataExportState { get; private set; }
+    
+
+    private ImportProcess(ImportProcessOptions options)
     {
-        return stateName switch
-        {
-            StepsName.SupplierFiles =>  StepsName.InitialLoad,
-            StepsName.InitialLoad =>  StepsName.Transformation,
-            StepsName.Transformation =>  StepsName.DateExport,
-            StepsName.DateExport =>  string.Empty,
-            _ => throw new InvalidOperationException()
-        };
+        Id = options.CorrelationId;
+
+        var downloadState = State.Start(
+            options.StepName,
+            options.CorrelationId,
+            options.CorrelationId,
+            options.TotalEventsCount);
+
+        PlatformId = options.PlatformId;
+        SupplierId = options.SupplierId;
+        CreateAt = DateTime.Now;
+        DownloadedFilesState = downloadState;
+    }
+
+    public static ImportProcess Start(ImportProcessOptions options)
+    {
+        return new ImportProcess(options);
     }
     
-    public static string GetStepName<TEvent>(TEvent @event) where TEvent : ImportEvent
+    public void Set(List<State> states)
     {
-        return @event switch
-        {
-            SupplierFilesDownloaded => StepsName.InitialLoad,
-            InitialLoadFinished => StepsName.Transformation,
-            TransformationFinished => StepsName.DateExport,
-            _ => throw new InvalidOperationException()
-        };
+        DownloadedFilesState = states.First(p=>p.Name == StepsName.PushApi);
+        InitialLoadState = states.Where(p=>p.Name == StepsName.InitialLoad);
+        TransformationState = states.Where(p=>p.Name == StepsName.Transformation);
+        DataExportState = states.Where(p=>p.Name == StepsName.DateExport);
     }
 }

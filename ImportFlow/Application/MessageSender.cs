@@ -5,7 +5,7 @@ using Retry = ImportFlow.Events.Retry;
 
 namespace ImportFlow.Application;
 
-public class MessageSender(IStateRepository<ImportEvent> repository, IBus bus)
+public class MessageRePublisher(IStateRepository<ImportEvent> repository, IBus bus)
 {
     public async Task ResendAsync(MessageCommand command)
     {
@@ -18,7 +18,7 @@ public class MessageSender(IStateRepository<ImportEvent> repository, IBus bus)
 
             var newEvent = CloneEvent((dynamic)@event);
             
-            await repository.PublishingAsync(newEvent);
+            await repository.AddEventAsync(newEvent);
             await bus.Publish(newEvent);
             break;
         }

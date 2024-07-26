@@ -2,9 +2,9 @@ namespace ImportFlow.Domain.Repositories;
 
 public interface IImportFlowRepository
 {
-    Task AddAsync(ImportFlowProcess importFlowProcessProcess);
+    Task AddAsync(ImportProcess importProcessProcess);
     
-    Task<IEnumerable<ImportFlowProcess>> GatAllAsync();
+    Task<IEnumerable<ImportProcess>> GatAllAsync();
     
-    Task<ImportFlowProcess> GatByIdAsync(Guid importFlowProcessId);   
+    Task<ImportProcess> GatByIdAsync(Guid importFlowProcessId);   
 }

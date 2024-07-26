@@ -1,13 +1,14 @@
 using ImportFlow.Domain;
 using ImportFlow.Domain.Repositories;
-using ImportFlow.Infrastructure.Query;
+using ImportFlow.Events;
+using ImportFlow.Infrastructure;
 using ImportFlow.Infrastructure.QueryModels;
 
 namespace ImportFlow.Application;
 
-public class ImportFlowService(IImportFlowRepository importFlowRepository)
+public class ImportMonitoring(IImportFlowRepository importFlowRepository, IStateRepository<ImportEvent> repository)
 {
-    public async Task<IEnumerable<ImportFlowProcess>> GetAsync()
+    public async Task<IEnumerable<ImportProcess>> GetAllAsync()
     {
         return await importFlowRepository.GatAllAsync();
     }
@@ -25,9 +26,20 @@ public class ImportFlowService(IImportFlowRepository importFlowRepository)
         return result;
     }
 
-    public async Task StartAsync(ImportFlowProcessInfo info)
+    public async Task StartAsync(ImportProcessOptions options)
     {
-        var importFlow = ImportFlowProcess.Start(info);
+        var importFlow = ImportProcess.Start(options);
         await importFlowRepository.AddAsync(importFlow);
+    }
+
+    public async Task StartStateAsync(string stepName,Guid correlationId, Guid causationId, int totalCount)
+    {
+        var state = State.Start(stepName, correlationId, causationId, totalCount);
+        await repository.AddAsync(state);
+    }
+    
+    public async Task FinishStateAsync(Guid correlationId, Guid causationId)
+    {
+        await repository.FinishState(correlationId, causationId);
     }
 }
