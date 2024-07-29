@@ -4,7 +4,7 @@ using ImportFlow.Events;
 using ImportFlow.Framework;
 using MassTransit;
 
-namespace ImportFlow.Infrastructure.Consumers;
+namespace ImportFlow.Consumers;
 
 public class DataExportConsumer(ImportMonitoring monitoring) : IMessageConsumer<TransformationFinished>
 {
@@ -26,7 +26,7 @@ public class DataExportConsumer(ImportMonitoring monitoring) : IMessageConsumer<
         
         // Processing
 
-        await Task.Delay(50000);
+        await Task.Delay(1000);
 
         var random = new Random();
         var number = random.Next(1, 10);

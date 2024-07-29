@@ -1,6 +1,6 @@
+using ImportFlow.Consumers;
 using ImportFlow.Events;
 using ImportFlow.Framework;
-using ImportFlow.Infrastructure.Consumers;
 using MassTransit;
 
 namespace ImportFlow;

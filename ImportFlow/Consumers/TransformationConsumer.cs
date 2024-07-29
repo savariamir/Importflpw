@@ -4,7 +4,7 @@ using ImportFlow.Events;
 using ImportFlow.Framework;
 using MassTransit;
 
-namespace ImportFlow.Infrastructure.Consumers;
+namespace ImportFlow.Consumers;
 
 public class TransformationConsumer(MessagePublisher messagePublisher, ImportMonitoring monitoring)
     : IMessageConsumer<InitialLoadFinished>
@@ -25,7 +25,7 @@ public class TransformationConsumer(MessagePublisher messagePublisher, ImportMon
         await monitoring.AddStateAsync(stateOptions);
 
         // Processing
-        await Task.Delay(50000);
+        await Task.Delay(1000);
 
 
         var random = new Random();

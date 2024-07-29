@@ -4,7 +4,7 @@ using ImportFlow.Events;
 using ImportFlow.Framework;
 using MassTransit;
 
-namespace ImportFlow.Infrastructure.Consumers;
+namespace ImportFlow.Consumers;
 
 public class InitialLoadConsumer(MessagePublisher messagePublisher, ImportMonitoring monitoring)
     : IMessageConsumer<SupplierFilesDownloaded>
@@ -31,7 +31,7 @@ public class InitialLoadConsumer(MessagePublisher messagePublisher, ImportMonito
         }
 
         // Processing
-        await Task.Delay(50000);
+        await Task.Delay(1000);
 
         for (var i = 0; i < totalEventsCount; i++)
         {

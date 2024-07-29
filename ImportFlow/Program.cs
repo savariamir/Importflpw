@@ -4,7 +4,6 @@ using ImportFlow.Application;
 using ImportFlow.Events;
 using ImportFlow.Framework;
 using ImportFlow.Infrastructure;
-using ImportFlow.Infrastructure.Consumers;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
