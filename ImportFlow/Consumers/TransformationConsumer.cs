@@ -19,7 +19,7 @@ public class TransformationConsumer(MessagePublisher messagePublisher, ImportMon
             CorrelationId = context.Message.CorrelationId,
             CausationId = context.Message.EventId,
             TotalCount = totalEventsCount,
-            HaveEvents = true
+            HasEvents = true
         };
         
         await monitoring.AddStateAsync(stateOptions);

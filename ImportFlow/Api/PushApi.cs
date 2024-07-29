@@ -1,7 +1,6 @@
 using ImportFlow.Application;
 using ImportFlow.Domain;
 using ImportFlow.Events;
-using ImportFlow.Infrastructure;
 
 namespace ImportFlow.Api;
 
@@ -31,7 +30,7 @@ public class PushApi(MessagePublisher messagePublisher, ImportMonitoring monitor
             CorrelationId = correlationId,
             CausationId = correlationId,
             TotalCount = totalEventsCount,
-            HaveEvents = true
+            HasEvents = true
         };
 
         await monitoring.StartAsync(importOptions, initialStateOptions);

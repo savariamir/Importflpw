@@ -6,5 +6,5 @@ public class StateOptions
     public Guid CorrelationId { get; set; }
     public Guid CausationId { get; set; }
     public int TotalCount { get; set; }
-    public bool HaveEvents { get; set; }
+    public bool HasEvents { get; set; }
 }

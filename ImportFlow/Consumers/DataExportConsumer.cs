@@ -19,7 +19,7 @@ public class DataExportConsumer(ImportMonitoring monitoring) : IMessageConsumer<
             CorrelationId = context.Message.CorrelationId,
             CausationId = context.Message.EventId,
             TotalCount = totalEventsCount,
-            HaveEvents = false
+            HasEvents = false
         };
 
         await monitoring.AddStateAsync(stateOptions);

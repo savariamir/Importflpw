@@ -35,7 +35,7 @@ public class State
         TotalCount = options.TotalCount;
         CreatedAt = DateTime.Now;
         IsInitialState = isInitialState;
-        HasEvents = options.HaveEvents;
+        HasEvents = options.HasEvents;
     }
 
     public static State InitiateState(StateOptions options)
