@@ -12,41 +12,41 @@ public class ImportProcess
 
     public DateTime? UpdatedAt { get; private set; }
 
-    public State DownloadedFilesState { get; private set; }
+    public IEnumerable<State> States { get; private set; }
 
-    public IEnumerable<State>? InitialLoadState { get; private set; }
+    private Dictionary<string, string> Transitions { get; set; }
 
-    public IEnumerable<State>? TransformationState { get; private set; }
+    public string GetNextState(string step)
+    {
+        return Transitions.TryGetValue(step, out var state) ? state : string.Empty;
+    }
 
-    public IEnumerable<State>? DataExportState { get; private set; }
-    
+    public string GetInitialStateName()
+    {
+        if (Transitions.Count > 0)
+        {
+            return Transitions.Keys.First();
+        }
+
+        throw new AggregateException();
+    }
 
     private ImportProcess(ImportProcessOptions options)
     {
         Id = options.CorrelationId;
-
-        var downloadState = State.Start(
-            options.StepName,
-            options.CorrelationId,
-            options.CorrelationId,
-            options.TotalEventsCount);
-
         PlatformId = options.PlatformId;
         SupplierId = options.SupplierId;
         CreateAt = DateTime.Now;
-        DownloadedFilesState = downloadState;
+        Transitions = options.Transitions;
     }
 
-    public static ImportProcess Start(ImportProcessOptions options)
+    public static ImportProcess NewImport(ImportProcessOptions options)
     {
         return new ImportProcess(options);
     }
-    
+
     public void Set(List<State> states)
     {
-        DownloadedFilesState = states.First(p=>p.Name == StepsName.PushApi);
-        InitialLoadState = states.Where(p=>p.Name == StepsName.InitialLoad);
-        TransformationState = states.Where(p=>p.Name == StepsName.Transformation);
-        DataExportState = states.Where(p=>p.Name == StepsName.DateExport);
+        States = states;
     }
 }

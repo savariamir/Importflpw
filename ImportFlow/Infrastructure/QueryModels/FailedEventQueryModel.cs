@@ -6,5 +6,5 @@ public class FailedEventQueryModel
 
     public DateTime CreatedAt { get; set; }
 
-    public string? ErrorMessage { get;  set; }
+    public required string ErrorMessage { get;  set; }
 }

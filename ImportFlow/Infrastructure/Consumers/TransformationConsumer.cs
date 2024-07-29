@@ -13,13 +13,19 @@ public class TransformationConsumer(MessagePublisher messagePublisher, ImportMon
     {
         // Start consuming
         var totalEventsCount = 3;
-        await monitoring.StartStateAsync(StepsName.Transformation,
-            context.Message.CorrelationId,
-            context.Message.EventId,
-            totalEventsCount);
+        var stateOptions = new StateOptions
+        {
+            Name = StepsName.Transformation,
+            CorrelationId = context.Message.CorrelationId,
+            CausationId = context.Message.EventId,
+            TotalCount = totalEventsCount,
+            HaveEvents = true
+        };
+        
+        await monitoring.AddStateAsync(stateOptions);
 
         // Processing
-        await Task.Delay(1000);
+        await Task.Delay(50000);
 
 
         var random = new Random();

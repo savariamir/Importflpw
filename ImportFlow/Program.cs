@@ -64,6 +64,11 @@ app.MapGet("/get-list", async (ImportMonitoring importFlowService) => await impo
     .WithName("GetList")
     .WithOpenApi();
 
+
+app.MapGet("/get-states", async (ImportMonitoring importFlowService, Guid id) => await importFlowService.GetStates(id))
+    .WithName("GetStates")
+    .WithOpenApi();
+
 app.MapPost("/send",
         async (MessageRePublisher sender, [FromBody] MessageCommand command) => await sender.ResendAsync(command))
     .WithName("Send")

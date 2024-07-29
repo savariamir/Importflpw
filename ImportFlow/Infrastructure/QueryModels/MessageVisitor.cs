@@ -2,7 +2,7 @@ using ImportFlow.Domain;
 
 namespace ImportFlow.Infrastructure.QueryModels;
 
-public class LogVisitor : IVisitor
+public class MessageVisitor : IVisitor
 {
     private HashSet<string> _messages { get; set; }
 
@@ -15,21 +15,35 @@ public class LogVisitor : IVisitor
 
     public void Visit(StateQueryModel state)
     {
-        if (state.Name == StepsName.DateExport || state.Events is null)
+        if (state.Name == StepsName.DateExport)
         {
             return;
         }
 
-        foreach (var eventQuery in state.Events)
+        var messages = state.Events?
+            .Where(p => p.FailedEvents != null)
+            .SelectMany(p => p.FailedEvents?.Select(failedEvent => failedEvent.ErrorMessage)
+                             ?? Array.Empty<string>()) ?? Array.Empty<string>();
+
+        foreach (var message in messages)
         {
-            eventQuery.Accept(this);
+            _messages.Add(message);
+        }
+
+        if (state.NextStates is null)
+        {
+            return;
+        }
+
+
+        foreach (var nextState in state.NextStates)
+        {
+            nextState.Accept(this);
         }
     }
 
     public void Visit(EventQueryModel eventQueryModel)
     {
-        eventQueryModel.State?.Accept(this);
-
         if (eventQueryModel.FailedEvents is null)
         {
             return;

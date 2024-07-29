@@ -12,22 +12,28 @@ public class DataExportConsumer(ImportMonitoring monitoring) : IMessageConsumer<
     {
         // Start consuming
         var totalEventsCount = 0;
-        await monitoring.StartStateAsync(
-            StepsName.DateExport,
-            context.Message.CorrelationId,
-            context.Message.EventId,
-            totalEventsCount);
 
+        var stateOptions = new StateOptions
+        {
+            Name = StepsName.DateExport,
+            CorrelationId = context.Message.CorrelationId,
+            CausationId = context.Message.EventId,
+            TotalCount = totalEventsCount,
+            HaveEvents = false
+        };
+
+        await monitoring.AddStateAsync(stateOptions);
+        
         // Processing
 
-        await Task.Delay(1000);
+        await Task.Delay(50000);
 
-        // var random = new Random();
-        // var number = random.Next(1, 10);
-        // if (number == 1)
-        // {
-        //     throw new Exception($"Something went wrong in Data Export {DateTime.Now.TimeOfDay}");
-        // }
+        var random = new Random();
+        var number = random.Next(1, 10);
+        if (number == 1)
+        {
+            throw new Exception($"Something went wrong in Data Export {DateTime.Now.TimeOfDay}");
+        }
 
 
         // Since Data Export is the last state of the flow, we need to finish it.

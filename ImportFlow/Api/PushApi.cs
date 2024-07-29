@@ -1,9 +1,6 @@
 using ImportFlow.Application;
 using ImportFlow.Domain;
-using ImportFlow.Domain.Repositories;
 using ImportFlow.Events;
-using ImportFlow.Framework;
-using MassTransit;
 
 namespace ImportFlow.Api;
 
@@ -13,16 +10,30 @@ public class PushApi(MessagePublisher messagePublisher, ImportMonitoring monitor
     {
         var correlationId = Guid.NewGuid();
         var totalEventsCount = 4;
-        var info = new ImportProcessOptions
+
+        var importOptions = new ImportProcessOptions
         {
-            StepName = StepsName.PushApi,
             PlatformId = 1,
             SupplierId = 21,
-            TotalEventsCount = totalEventsCount,
             CorrelationId = correlationId,
+            Transitions = new Dictionary<string, string>
+            {
+                {StepsName.PushApi, StepsName.InitialLoad},
+                {StepsName.InitialLoad, StepsName.Transformation},
+                {StepsName.Transformation, StepsName.DateExport}
+            }
         };
 
-        await monitoring.StartAsync(info);
+        var initialStateOptions = new StateOptions
+        {
+            Name = StepsName.PushApi,
+            CorrelationId = correlationId,
+            CausationId = correlationId,
+            TotalCount = totalEventsCount,
+            HaveEvents = true
+        };
+
+        await monitoring.StartAsync(importOptions, initialStateOptions);
         //
 
 

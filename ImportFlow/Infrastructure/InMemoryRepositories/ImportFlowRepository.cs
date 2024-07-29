@@ -10,10 +10,9 @@ public class InMemoryImportFlowRepository(
 {
     private readonly List<ImportProcess> _database = new();
 
-    public async Task AddAsync(ImportProcess import)
+    public async Task StartAsync(ImportProcess import)
     {
         _database.Add(import);
-        await repository.AddAsync(import.DownloadedFilesState);
     }
 
     public async Task<IEnumerable<ImportProcess>> GatAllAsync()

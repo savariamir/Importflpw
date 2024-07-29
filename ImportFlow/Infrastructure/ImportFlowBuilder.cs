@@ -8,6 +8,7 @@ public abstract class QueryModelBuilder
 {
     public static ImportFlowQueryModel Build(ImportProcess import)
     {
+        var initialState = import.States.First(p => p.IsInitialState);
         var model = new ImportFlowQueryModel
         {
             ImportFlowProcessId = import.Id,
@@ -17,28 +18,78 @@ public abstract class QueryModelBuilder
             UpdatedAt = import.UpdatedAt,
             State = new StateQueryModel
             {
-                Name = StepsName.PushApi,
-                CorrelationId = import.DownloadedFilesState.CorrelationId,
-                CausationId = import.DownloadedFilesState.CausationId,
-                CreateAt = import.DownloadedFilesState.CreatedAt,
-                TotalCount = import.DownloadedFilesState.TotalCount,
-                Events = CreateEvents(import, import.DownloadedFilesState)
-            }
+                Name = initialState.Name,
+                CorrelationId = initialState.CorrelationId,
+                CausationId = initialState.CausationId,
+                CreateAt = initialState.CreatedAt,
+                TotalCount = initialState.TotalCount,
+                Events = CreateEvents(initialState),
+                NextStates = CreateNextStates(import, initialState)
+            },
         };
 
         var statusVisitor = new StatusVisitor();
         statusVisitor.Visit(model);
 
-        var messagesVisitor = new LogVisitor();
+        var messagesVisitor = new MessageVisitor();
         messagesVisitor.Visit(model);
 
         return model;
     }
 
+    private static IEnumerable<StateQueryModel> CreateNextStates(ImportProcess import, State currentState)
+    {
+        var states = GetNextStates(import, currentState);
+        if (states.Count == 0)
+        {
+            return [];
+        }
+
+        var nextStates = new List<StateQueryModel>();
+
+        if (!currentState.HasEvents)
+        {
+            nextStates.AddRange(states.Select(state => new StateQueryModel
+            {
+                Name = state.Name,
+                Status = state.Status.ToString(),
+                CorrelationId = state.CorrelationId,
+                CausationId = state.CausationId,
+                CreateAt = state.CreatedAt,
+                TotalCount = state.TotalCount,
+                Events = CreateEvents(state),
+                NextStates = CreateNextStates(import, state)
+            }));
+        }
+        else
+        {
+            foreach (var t in currentState.Events)
+            {
+                var state = states.FirstOrDefault(p => p.CausationId == t.EventId);
+                if (state is null) continue;
+
+                nextStates.Add(new StateQueryModel
+                {
+                    Name = state.Name,
+                    Status = state.Status.ToString(),
+                    CorrelationId = state.CorrelationId,
+                    CausationId = state.CausationId,
+                    CreateAt = state.CreatedAt,
+                    TotalCount = state.TotalCount,
+                    Events = CreateEvents(state),
+                    NextStates = CreateNextStates(import, state)
+                });
+            }
+        }
+
+
+        return nextStates;
+    }
+
     public static IEnumerable<ImportFlowQueryModel> GetImportFlowList(IEnumerable<ImportProcess> imports)
     {
         var result = new List<ImportFlowQueryModel>();
-        var visitor = new LogVisitor();
+        var visitor = new MessageVisitor();
         foreach (var import in imports)
         {
             var queryModel = Build(import);
@@ -49,43 +100,17 @@ public abstract class QueryModelBuilder
         return result;
     }
 
-    private static IEnumerable<EventQueryModel> CreateEvents(ImportProcess import, State currentState)
+    private static IEnumerable<EventQueryModel> CreateEvents(State state)
     {
-        var events = new List<EventQueryModel>();
-        foreach (var @event in currentState.Events)
-        {
-            var eventQuery = new EventQueryModel
+        return state.Events.Select(@event => new EventQueryModel
             {
                 EventId = @event.EventId,
                 CreatedAt = @event.CreatedAt,
                 EventName = @event.GetType().Name,
                 Retry = CreateRetry(@event.Retry),
-                FailedEvents = GetFailedEvents(currentState.FailedEvents, @event.EventId),
-                State = CreateStateQueryModel(currentState.Name, currentState.FailedEvents, @event.EventId)
-            };
-
-            var nextState = GetNextState(import, currentState.Name)
-                ?.FirstOrDefault(p => p.CausationId == @event.EventId);
-            if (nextState is not null)
-            {
-                var initialLoadEvents = CreateEvents(import, nextState);
-
-                eventQuery.State = new StateQueryModel
-                {
-                    Name = nextState.Name,
-                    CorrelationId = nextState.CorrelationId,
-                    CausationId = nextState.CausationId,
-                    CreateAt = nextState.CreatedAt,
-                    Status = nextState.Status.ToString(),
-                    TotalCount = nextState.TotalCount,
-                    Events = initialLoadEvents
-                };
-            }
-
-            events.Add(eventQuery);
-        }
-
-        return events;
+                FailedEvents = GetFailedEvents(state.FailedEvents, @event.EventId),
+            })
+            .ToList();
     }
 
     private static RetryQueryModel? CreateRetry(Retry? retry)
@@ -112,29 +137,13 @@ public abstract class QueryModelBuilder
             });
     }
 
-    private static IEnumerable<State>? GetNextState(ImportProcess import, string currentStateName)
+    private static List<State> GetNextStates(ImportProcess import, State currentState)
     {
-        return currentStateName switch
-        {
-            StepsName.PushApi => import.InitialLoadState,
-            StepsName.InitialLoad => import.TransformationState,
-            StepsName.Transformation => import.DataExportState,
-            StepsName.DateExport => Enumerable.Empty<State>(),
-            _ => throw new ArgumentOutOfRangeException(nameof(currentStateName), currentStateName, null)
-        };
-    }
+        if (currentState.Events is null) return [];
+        var events = currentState.Events.Select(p => p.EventId);
 
-    private static StateQueryModel CreateStateQueryModel(string stepName, IEnumerable<FailedEvent> failedEvents,
-        Guid eventId)
-    {
-        return new StateQueryModel
-        {
-            Name = ImportStepService.GetNextName(stepName),
-            Status = failedEvents
-                .FirstOrDefault(f => f.EventId == eventId) != null
-                ? ImportStatus.Failed.ToString()
-                : ImportStatus.Processing.ToString(),
-            CreateAt = DateTime.Now
-        };
+        var nextState = import.GetNextState(currentState.Name);
+
+        return import.States.Where(p => p.Name == nextState && events.Contains(p.CausationId)).ToList();
     }
 }

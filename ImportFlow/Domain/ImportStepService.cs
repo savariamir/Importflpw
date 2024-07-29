@@ -12,6 +12,7 @@ public static class ImportStepService
     {
         return stateName switch
         {
+            StepsName.PullApi =>  StepsName.InitialLoad,
             StepsName.PushApi =>  StepsName.InitialLoad,
             StepsName.InitialLoad =>  StepsName.Transformation,
             StepsName.Transformation =>  StepsName.DateExport,

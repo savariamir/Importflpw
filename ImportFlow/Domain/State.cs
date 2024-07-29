@@ -18,23 +18,34 @@ public class State
 
     public List<ImportEvent> SucceedEvents { get; } = new();
 
+    public bool IsInitialState { get; private set; }
+
     public long TotalCount { get; }
+    
+    public bool HasEvents { get; private set; }
 
-    private bool IsFinished { get; set; }
+    public bool IsFinished { get; private set; }
 
 
-    private State(string name, Guid correlationId, Guid causationId, long totalCount)
+    private State(StateOptions options, bool isInitialState)
     {
-        CorrelationId = correlationId;
-        CausationId = causationId;
-        Name = name;
-        TotalCount = totalCount;
+        CorrelationId = options.CorrelationId;
+        CausationId = options.CausationId;
+        Name = options.Name;
+        TotalCount = options.TotalCount;
         CreatedAt = DateTime.Now;
+        IsInitialState = isInitialState;
+        HasEvents = options.HaveEvents;
     }
 
-    public static State Start(string name, Guid correlationId, Guid causationId, long totalCount)
+    public static State InitiateState(StateOptions options)
     {
-        return new State(name, correlationId, causationId, totalCount);
+        return new State(options, true);
+    }
+
+    public static State AddState(StateOptions options)
+    {
+        return new State(options, false);
     }
 
     public void Finish()

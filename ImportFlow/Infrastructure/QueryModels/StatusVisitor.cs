@@ -16,29 +16,27 @@ public class StatusVisitor : IVisitor
         {
             return;
         }
-        
+
         var isStateExpired = (DateTime.Now - state.CreateAt).Minutes > 1;
-        if (state.Events is null)
+        if (state.NextStates is null)
         {
             state.Status = isStateExpired ? ImportStatus.Failed.ToString() : ImportStatus.Processing.ToString();
             return;
         }
 
-        foreach (var eventQuery in state.Events)
+        foreach (var nextState in state.NextStates)
         {
-            eventQuery.Accept(this);
+            nextState.Accept(this);
         }
 
-        var statuses = state.Events.Select(p => p.State?.Status).ToList();
-
+        var statuses = state.NextStates.Select(p => p.Status).ToList();
         if (statuses.Any(s => s == ImportStatus.Processing.ToString()))
         {
             state.Status = ImportStatus.Processing.ToString();
             return;
         }
-        
-        
-        var isAllEventsAdded = state.Events.Count() == state.TotalCount;
+
+        var isAllEventsAdded = state.NextStates?.Count() == state.TotalCount;
         if (statuses.All(s => s == ImportStatus.Completed.ToString()) && isAllEventsAdded)
         {
             state.Status = ImportStatus.Completed.ToString();
@@ -62,7 +60,5 @@ public class StatusVisitor : IVisitor
 
     public void Visit(EventQueryModel eventQueryModel)
     {
-        eventQueryModel.State?.Accept(this);
     }
-    
 }
