@@ -3,7 +3,7 @@ using ImportFlow.Events;
 using MassTransit;
 using Retry = ImportFlow.Events.Retry;
 
-namespace ImportFlow.Application;
+namespace ImportFlow.Infrastructure;
 
 public class MessageRePublisher(IStateRepository<ImportEvent> repository, IBus bus)
 {

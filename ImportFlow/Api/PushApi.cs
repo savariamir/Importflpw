@@ -1,6 +1,7 @@
 using ImportFlow.Application;
 using ImportFlow.Domain;
 using ImportFlow.Events;
+using ImportFlow.Infrastructure;
 
 namespace ImportFlow.Api;
 
